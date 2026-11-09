@@ -1,0 +1,548 @@
+import { blankCard, validateCard, ASPECTS, safeName } from "./model.js";
+import { renderCard, getImage } from "./render.js";
+import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
+const $ = (s, r = document) => r.querySelector(s),
+  $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const e = (v) =>
+  String(v ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+const icons = {
+  card: '<rect x="6" y="3" width="12" height="18" rx="2"/><path d="m12 8 3 4-3 4-3-4z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  book: '<path d="M12 5v16M3 3l9 2 9-2v16l-9 2-9-2z"/>',
+  folder: '<path d="M3 7V4h6l3 3h9v13H3z"/>',
+  download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+  upload: '<path d="M12 17V3m-5 5 5-5 5 5M4 16v5h16v-5"/>',
+  image:
+    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 6-6 4 4 3-3 5 5"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  chevron: '<path d="m9 5 7 7-7 7"/>',
+  duplicate:
+    '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/>',
+  trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
+  print: '<path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6z"/>',
+  rotate:
+    '<path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/>',
+};
+const icon = (key, size = 18) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[key] || icons.card}</svg>`;
+let state = { cards: [blankCard()], active: 0 },
+  side = "front",
+  tab = "text",
+  library = [],
+  filter = "all",
+  search = "",
+  packId = null,
+  drawVersion = 0,
+  timer;
+let db;
+function toast(text, bad = false) {
+  const n = $("#toast");
+  n.textContent = text;
+  n.className = "show" + (bad ? " error" : "");
+  clearTimeout(n.timer);
+  n.timer = setTimeout(() => (n.className = ""), 4500);
+}
+const card = () => state.cards[state.active] || state.cards[0];
+async function database() {
+  if (db) return db;
+  db = await new Promise((resolve, reject) => {
+    const r = indexedDB.open("underdark-atelier", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("workspace");
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+  return db;
+}
+async function persist() {
+  try {
+    const d = await database();
+    await new Promise((resolve, reject) => {
+      const t = d.transaction("workspace", "readwrite");
+      t.objectStore("workspace").put(state, "current");
+      t.oncomplete = resolve;
+      t.onerror = () => reject(t.error);
+    });
+    if ($("#saved"))
+      $("#saved").innerHTML = icon("check", 13) + " Збережено на пристрої";
+  } catch {
+    if ($("#saved")) $("#saved").textContent = "Не збережено";
+    toast("Не вдалося зберегти в браузері. Експортуйте проєкт у JSON.", true);
+  }
+}
+function changed() {
+  if ($("#saved")) $("#saved").textContent = "Збереження…";
+  clearTimeout(timer);
+  timer = setTimeout(persist, 450);
+  preview();
+}
+function header(route) {
+  return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 25)}</span><span>UNDERDARK<span class="brand-sub">ATELIER / CARD STUDIO</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${route === "library" ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button></header>`;
+}
+function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
+  return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
+}
+function panel() {
+  if (tab === "text")
+    return `<div class="panel-caption">01 / ТЕКСТ КАРТИ</div>${field("Назва", "name", { placeholder: "Наприклад, High Priestess", max: 65 })}<div class="field-row">${field("Вартість", "cost", { placeholder: "—", max: 4 })}${field("Тип / раса", "type", { placeholder: "Drow", max: 35 })}</div>${field("Назва аспекту", "aspectText", { placeholder: "Obedience", max: 35 })}${field("Ефект карти", "effect", { area: true, placeholder: "Напишіть дію та її умови…", max: 1500 })}${field("Художній текст", "flavour", { area: true, placeholder: "Цитата або коротка історія…", max: 900 })}<div class="field-row">${field("Очки в колоді", "deckVP", { placeholder: "1", max: 3 })}${field("Внутрішнє коло", "innerVP", { placeholder: "3", max: 3 })}</div><div class="field-row">${field("Кількість крапок", "copies", { placeholder: "1–8", max: 1 })}${field("Підпис унизу", "footer", { placeholder: "Автор / номер", max: 90 })}</div><label class="field range"><span>Розмір тексту <b>${card().fontSize} px</b></span><input data-key="fontSize" type="range" min="17" max="34" value="${card().fontSize}"></label>`;
+  if (tab === "art")
+    return `<div class="panel-caption">02 / ІЛЮСТРАЦІЯ</div><button class="upload-box" data-upload="art">${icon("image", 34)}<strong>${card().art ? "Змінити зображення" : "Додати ілюстрацію"}</strong><span>PNG, JPG або WebP · до 15 МБ</span></button><p class="muted">Зображення заповнює вікно карти. Зсуньте та збільште його, щоб вибрати композицію.</p>${[
+      ["artScale", "Масштаб", 1, 3, 0.01],
+      ["artX", "Горизонталь", -100, 100, 1],
+      ["artY", "Вертикаль", -100, 100, 1],
+    ]
+      .map(
+        ([key, label, min, max, step]) =>
+          `<label class="field range"><span>${label}</span><input data-key="${key}" type="range" min="${min}" max="${max}" step="${step}" value="${card()[key]}"></label>`,
+      )
+      .join(
+        "",
+      )}<button class="button ghost" id="reset-crop">${icon("rotate")} Скинути кадрування</button>${card().art ? '<button class="text-button danger" data-clear="art">Прибрати ілюстрацію</button>' : ""}`;
+  if (tab === "icons")
+    return `<div class="panel-caption">03 / АСПЕКТ І РАМКА</div><p class="muted">Коло залишається частиною рамки. Виберіть символ або завантажте власну іконку.</p><div class="aspect-grid">${Object.entries(
+      ASPECTS,
+    )
+      .map(
+        ([key, v]) =>
+          `<button data-aspect="${key}" class="aspect ${card().aspect === key ? "selected" : ""}" aria-pressed="${card().aspect === key}"><span>${v.symbol || "—"}</span>${v.label}</button>`,
+      )
+      .join(
+        "",
+      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}<label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
+  return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Фіолетовий візерунок</option><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна Minion</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : '<div class="info-note">Сорочка з наявних компонентів Tyrants of the Underdark.</div>'}`;
+}
+function editor() {
+  return `<div class="editor-intro"><div><div class="eyebrow">YOUR HOUSE. YOUR CREATION.</div><h1>Майстерня карт</h1><p>Ваші історії. Ваші правила. Справжня карта на виході.</p></div><button class="button ghost" id="new-card">${icon("plus")} Нова карта</button></div><div class="workspace"><aside class="editor-panel"><div class="panel-tabs" role="tablist">${[
+    ["text", "Текст"],
+    ["art", "Ілюстрація"],
+    ["icons", "Іконки"],
+    ["back", "Сорочка"],
+  ]
+    .map(
+      ([k, v]) =>
+        `<button role="tab" aria-selected="${tab === k}" data-tab="${k}" class="${tab === k ? "selected" : ""}">${v}</button>`,
+    )
+    .join(
+      "",
+    )}</div><div class="panel-content">${panel()}</div></aside><main class="preview-panel"><div class="preview-top"><span class="pill"><i></i> ЖИВЕ ПРЕВ’Ю</span><span>63,5 × 88 мм</span></div><div class="card-stage"><span class="stage-measure measure-top">63,5 ММ</span><canvas id="preview" aria-label="Прев’ю карти"></canvas><span class="stage-measure measure-side">88 ММ</span></div><div class="side-switch"><button data-side="front" class="${side === "front" ? "selected" : ""}">Лицьова сторона</button><button data-side="back" class="${side === "back" ? "selected" : ""}">Сорочка</button></div><div class="overflow-warning" id="overflow-warning" hidden>Текст не вміщується. Зменште шрифт або скоротіть текст.</div><div class="preview-foot">${icon("check", 15)} Рамка збережена · файл без підказок</div></main><aside class="export-panel"><div class="panel-caption">ГОТОВО ДО ДРУКУ</div><h2>З паперу —<br>у Підзем’я.</h2><p class="muted">Друкований PDF із точним розміром карти. Без скриншотів і ручного масштабування.</p><div class="print-spec"><div><span>Розмір</span><strong>63,5 × 88 мм</strong></div><div><span>Зображення</span><strong>≈ 300 DPI</strong></div><div><span>Ваша колода</span><strong>${state.cards.length} ${state.cards.length === 1 ? "карта" : "карт"}</strong></div></div><label class="field"><span>Експортувати</span><select id="export-scope"><option value="current">Поточну карту</option><option value="all">Усі мої карти</option></select></label><label class="check-field"><input id="include-back" type="checkbox" checked><span>Додати сорочки</span></label><button class="button primary wide" data-export="pdf">${icon("download")} Зберегти PDF</button><button class="button ghost wide" data-export="a4">${icon("print")} Аркуш A4 · до 9 карт</button><div class="export-links"><button data-export="png">PNG</button><button data-export="zip">ZIP</button><button data-export="json">Проєкт JSON</button></div><div class="print-hint"><b>Друкуйте в масштабі 100%.</b><br>Вимкніть «Підігнати до сторінки». Для A4 із сорочками — переворот уздовж довгого краю. Спочатку перевірте один аркуш.</div><div class="workspace-actions"><button class="button small ghost" id="duplicate">${icon("duplicate")} Копія</button><button class="icon-button danger" id="delete-card" aria-label="Видалити карту">${icon("trash")}</button></div></aside></div>`;
+}
+async function preview() {
+  const c = $("#preview");
+  if (!c) return;
+  const version = ++drawVersion;
+  try {
+    await document.fonts.ready;
+    const r = await renderCard(card(), {
+      back: side === "back",
+      preview: true,
+    });
+    if (version !== drawVersion || !$("#preview")) return;
+    const dest = $("#preview");
+    dest.width = r.canvas.width;
+    dest.height = r.canvas.height;
+    dest.getContext("2d").drawImage(r.canvas, 0, 0);
+    $("#overflow-warning").hidden = !r.overflow;
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+function projects() {
+  return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">YOUR PRIVATE ARCHIVE</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3>${e(c.name || "Без назви")}</h3><p>${e(c.type || "Власна карта")} · 63,5 × 88 мм</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
+}
+const categories = [
+  ["all", "Усі матеріали"],
+  ["decks", "Колоди"],
+  ["back", "Сорочки"],
+  ["mats", "Планшети"],
+  ["boards", "Поля"],
+  ["rules", "Правила"],
+];
+function packList() {
+  const q = search.toLowerCase();
+  return library.filter(
+    (p) =>
+      (filter === "all" ||
+        (filter === "rules" && p.files.length) ||
+        (filter === "back" &&
+          (p.cards.some((c) => c.kind === "back") ||
+            p.pages.some((c) => c.kind === "back"))) ||
+        p.category === filter) &&
+      (!q ||
+        (
+          p.title +
+          " " +
+          p.subtitle +
+          " " +
+          p.cards.map((c) => c.name).join(" ")
+        )
+          .toLowerCase()
+          .includes(q)),
+  );
+}
+function libraryView() {
+  const p = library.find((p) => p.id === packId);
+  if (p) return packView(p);
+  const list = packList();
+  return `<main class="content-page"><div class="library-hero"><div><div class="eyebrow">THE UNDERDARK ARCHIVE</div><h1>Зібрано для<br><i>вашого столу.</i></h1><p>Фанатські колоди, сорочки, планшети та поля.<br>Усе з наданих матеріалів — в одному місці.</p></div><div class="archive-mark">${icon("book", 90)}<span>${library.length} НАБОРІВ / ${library.reduce((n, p) => n + p.cards.length, 0)} ДИЗАЙНІВ КАРТ</span></div></div><div class="library-toolbar"><div class="category-tabs">${categories.map(([id, label]) => `<button class="${filter === id ? "selected" : ""}" data-filter="${id}">${label}</button>`).join("")}</div><input id="library-search" type="search" placeholder="Знайти колоду або карту…" value="${e(search)}" aria-label="Пошук у бібліотеці"></div><div id="pack-grid" class="pack-grid">${list.map((p) => packTile(p)).join("") || '<p class="empty-state">Нічого не знайдено. Спробуйте іншу назву.</p>'}</div><p class="library-note">Фанатські матеріали з вашої локальної колекції. Авторство оригінальних компонентів належить їхнім правовласникам; це неофіційна майстерня.</p></main>`;
+}
+function packTile(p) {
+  const cover =
+    p.cards.find((c) => c.kind === "market") || p.cards[0] || p.pages[0];
+  return `<button class="pack-tile" data-pack="${p.id}"><div class="pack-cover ${p.category}">${cover ? `<img src="${e(cover.image)}" alt="${e(p.title)}" loading="lazy">` : icon("book", 64)}<span class="pack-category">${p.category === "decks" ? "КОЛОДА" : p.category === "mats" ? "ПЛАНШЕТИ" : "ПОЛЕ"}</span>${p.note ? '<span class="pack-note-dot" title="Є примітка до джерела"></span>' : ""}</div><div class="pack-info"><div><h3>${e(p.title)}</h3><p>${e(p.subtitle)}</p></div>${icon("chevron")}</div><div class="pack-meta"><span>${p.cards.length ? p.cards.length + " дизайнів" : p.pages.length + " сторінок"}</span><span>${p.files.length} файлів</span></div></button>`;
+}
+function packView(p) {
+  let cards =
+    filter === "back"
+      ? [...p.cards, ...p.pages].filter((c) => c.kind === "back")
+      : p.cards;
+  return `<main class="content-page"><button class="text-button back-library" id="back-library">← Уся бібліотека</button><div class="page-heading"><div><div class="eyebrow">FAN EXPANSION / ARCHIVE</div><h1>${e(p.title)}</h1><p>${e(p.subtitle)}</p></div><span class="count-label">${p.cards.length} дизайнів · ${p.pages.length} сторінок</span></div>${p.note ? `<div class="info-note">${e(p.note)}</div>` : ""}<div class="resource-files">${p.files.map((f) => `<a class="resource-file" href="${e(f.url)}" download>${icon("download")}<span><b>${e(f.name)}</b><small>${f.type}${f.pages ? " · " + f.pages + " стор." : ""} · ${(f.size / 1048576).toFixed(1)} МБ</small></span></a>`).join("") || '<p class="muted">Карти доступні нижче окремими зображеннями.</p>'}</div>${cards.length ? `<h2 class="section-label">${filter === "back" ? "Сорочки" : "Карти та компоненти"} <span>${cards.length}</span></h2><div class="asset-grid">${cards.map((c) => assetTile(c, p)).join("")}</div>` : ""}${p.pages.length && filter !== "back" ? `<h2 class="section-label">Аркуші та планшети <span>${p.pages.length}</span></h2><div class="asset-grid sheets">${p.pages.map((c) => assetTile(c, p)).join("")}</div>` : ""}${p.rules ? `<details class="rules"><summary>Правила з оригінального документа</summary><pre>${e(p.rules)}</pre></details>` : ""}</main>`;
+}
+function assetTile(c, p) {
+  return `<button class="asset-tile" data-asset="${e(c.id)}" data-in-pack="${p.id}"><div><img src="${e(c.image)}" alt="${e(c.name)}" loading="lazy"></div><h3>${e(c.name)}</h3><p>${{ market: "Карта ринку", back: "Сорочка", treasure: "Скарб", stalker: "Сталкер", exalted: "Додаткова карта", ascended: "Дракон", mat: "Планшет", board: "Поле", sheet: "Аркуш", update: "Оновлення" }[c.kind] || "Компонент"}${c.copies ? " · " + c.copies + " коп." : ""}</p></button>`;
+}
+function openAsset(id, pack) {
+  const p = library.find((p) => p.id === pack),
+    a = [...p.cards, ...p.pages].find((a) => a.id === id);
+  const d = document.createElement("dialog");
+  d.className = "asset-dialog";
+  d.innerHTML = `<button class="icon-button dialog-close" aria-label="Закрити">${icon("close")}</button><div class="asset-large"><img src="${e(a.image)}" alt="${e(a.name)}"></div><div class="asset-detail"><div class="eyebrow">${e(p.title)}</div><h2>${e(a.name)}</h2><p class="muted">${e(p.subtitle)}</p><div class="asset-actions"><a class="button primary" href="${e(a.image)}" download="${e(safeName(a.name))}.webp">${icon("download")} Зберегти зображення</a>${a.sourceFile ? `<a class="button ghost" href="${e(a.sourceFile)}" download>PDF джерела · стор. ${a.page}</a>` : ""}${a.kind === "back" ? '<button class="button ghost" id="use-back">Використати як сорочку</button>' : ""}</div></div>`;
+  document.body.append(d);
+  d.showModal();
+  d.addEventListener("close", () => d.remove());
+  $(".dialog-close", d).onclick = () => d.close();
+  d.addEventListener("click", (ev) => {
+    if (ev.target === d) d.close();
+  });
+  if ($("#use-back", d))
+    $("#use-back", d).onclick = async () => {
+      card().backImage = await blobData(await (await fetch(a.image)).blob());
+      card().backMode = "image";
+      tab = "back";
+      side = "back";
+      d.close();
+      location.hash = "editor";
+      await persist();
+      render();
+    };
+}
+function route() {
+  return (location.hash.slice(1) || "editor").split("/")[0];
+}
+function render() {
+  const r = route();
+  $("#app").innerHTML =
+    header(r) +
+    (r === "library"
+      ? libraryView()
+      : r === "projects"
+        ? projects()
+        : editor()) +
+    `<footer class="app-footer"><span>UNDERDARK ATELIER <b>Неофіційна фанатська майстерня</b></span><span>63,5 × 88 мм · створено для вашого столу</span></footer>`;
+  bind();
+  if (r === "editor") preview();
+  if (r === "projects")
+    $$("[data-thumbnail]").forEach(async (n) => {
+      const v = await renderCard(state.cards[+n.dataset.thumbnail]);
+      n.width = 300;
+      n.height = 416;
+      n.getContext("2d").drawImage(v.canvas, 0, 0, 300, 416);
+    });
+}
+function bind() {
+  $$("[data-key]").forEach((n) =>
+    n.addEventListener(
+      n.type === "range" ||
+        n.type === "color" ||
+        n.tagName === "TEXTAREA" ||
+        n.tagName === "INPUT"
+        ? "input"
+        : "change",
+      () => {
+        card()[n.dataset.key] = n.type === "range" ? Number(n.value) : n.value;
+        if (n.type === "range") {
+          const b = n.closest("label").querySelector("b");
+          if (b) b.textContent = n.value + " px";
+        }
+        changed();
+        if (n.dataset.key === "backMode") render();
+      },
+    ),
+  );
+  $$("[data-tab]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        tab = n.dataset.tab;
+        if (tab === "back") side = "back";
+        else side = "front";
+        render();
+      }),
+  );
+  $$("[data-side]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        side = n.dataset.side;
+        render();
+      }),
+  );
+  $$("[data-aspect]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        card().aspect = n.dataset.aspect;
+        card().icon = "";
+        changed();
+        render();
+      }),
+  );
+  $$("[data-upload]").forEach(
+    (n) => (n.onclick = () => upload(n.dataset.upload)),
+  );
+  $$("[data-clear]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        card()[n.dataset.clear] = "";
+        changed();
+        render();
+      }),
+  );
+  if ($("#reset-crop"))
+    $("#reset-crop").onclick = () => {
+      Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
+      changed();
+      render();
+    };
+  if ($("#new-card"))
+    $("#new-card").onclick = () => {
+      state.cards.push(blankCard());
+      state.active = state.cards.length - 1;
+      side = "front";
+      tab = "text";
+      persist();
+      location.hash = "editor";
+      render();
+    };
+  if ($("#duplicate"))
+    $("#duplicate").onclick = () => {
+      state.cards.push({ ...card(), id: crypto.randomUUID() });
+      state.active = state.cards.length - 1;
+      persist();
+      render();
+      toast("Створено копію карти.");
+    };
+  if ($("#delete-card"))
+    $("#delete-card").onclick = () => {
+      if (
+        !confirm(
+          "Видалити поточну карту? Експортуйте проєкт, якщо хочете залишити копію.",
+        )
+      )
+        return;
+      state.cards.splice(state.active, 1);
+      if (!state.cards.length) state.cards.push(blankCard());
+      state.active = Math.min(state.active, state.cards.length - 1);
+      persist();
+      render();
+    };
+  $$("[data-open]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        state.active = +n.dataset.open;
+        location.hash = "editor";
+        persist();
+        render();
+      }),
+  );
+  $$(".import-project").forEach((n) => (n.onclick = importProject));
+  $$("[data-export]").forEach((n) => (n.onclick = () => doExport(n)));
+  $$("[data-filter]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        filter = n.dataset.filter;
+        packId = null;
+        render();
+      }),
+  );
+  $$("[data-pack]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        packId = n.dataset.pack;
+        render();
+        window.scrollTo(0, 0);
+      }),
+  );
+  if ($("#back-library"))
+    $("#back-library").onclick = () => {
+      packId = null;
+      render();
+    };
+  if ($("#library-search"))
+    $("#library-search").oninput = (ev) => {
+      search = ev.target.value;
+      $("#pack-grid").innerHTML =
+        packList().map(packTile).join("") ||
+        '<p class="empty-state">Нічого не знайдено.</p>';
+      $$("[data-pack]").forEach(
+        (n) =>
+          (n.onclick = () => {
+            packId = n.dataset.pack;
+            render();
+            window.scrollTo(0, 0);
+          }),
+      );
+    };
+  $$("[data-asset]").forEach(
+    (n) => (n.onclick = () => openAsset(n.dataset.asset, n.dataset.inPack)),
+  );
+}
+async function doExport(button) {
+  const type = button.dataset.export,
+    cards = $("#export-scope")?.value === "all" ? state.cards : [card()],
+    name = safeName(card().name);
+  button.disabled = true;
+  const original = button.innerHTML;
+  button.textContent = "Готуємо файл…";
+  try {
+    await persist();
+    if (type === "json")
+      download(
+        new Blob(
+          [
+            JSON.stringify(
+              { format: "tyrants-studio", version: 1, cards },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json" },
+        ),
+        name + ".json",
+      );
+    else if (type === "png")
+      download(
+        await exportPNG(card(), { back: side === "back" }),
+        name + (side === "back" ? "-back" : "-front") + ".png",
+      );
+    else if (type === "zip")
+      download(await exportBundle(cards), name + "-cards.zip");
+    else
+      download(
+        await exportPDF(cards, {
+          a4: type === "a4",
+          duplex: $("#include-back").checked,
+        }),
+        name + (type === "a4" ? "-A4" : "-63.5x88") + ".pdf",
+      );
+    toast("Файл готовий. Для друку PDF оберіть масштаб 100%.");
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    button.disabled = false;
+    button.innerHTML = original;
+  }
+}
+const blobData = (blob) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+function filePicker(accept) {
+  return new Promise((resolve) => {
+    const i = document.createElement("input");
+    i.type = "file";
+    i.accept = accept;
+    i.onchange = () => resolve(i.files?.[0]);
+    i.oncancel = () => resolve(null);
+    i.click();
+  });
+}
+async function upload(key) {
+  try {
+    const f = await filePicker("image/png,image/jpeg,image/webp");
+    if (!f) return;
+    if (
+      !["image/png", "image/jpeg", "image/webp"].includes(f.type) ||
+      f.size > 15 * 1048576
+    )
+      throw Error("Оберіть PNG, JPG або WebP до 15 МБ.");
+    const src = await blobData(f),
+      im = await getImage(src);
+    const canvas = document.createElement("canvas"),
+      s = Math.min(1, 1800 / Math.max(im.width, im.height));
+    canvas.width = Math.round(im.width * s);
+    canvas.height = Math.round(im.height * s);
+    canvas.getContext("2d").drawImage(im, 0, 0, canvas.width, canvas.height);
+    card()[key] = canvas.toDataURL(
+      key === "icon" ? "image/png" : "image/jpeg",
+      0.94,
+    );
+    if (key === "art") Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
+    changed();
+    render();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+async function importProject() {
+  try {
+    const f = await filePicker(".json,application/json");
+    if (!f) return;
+    if (f.size > 60 * 1048576) throw Error("Файл завеликий. Максимум 60 МБ.");
+    const data = JSON.parse(await f.text());
+    if (
+      data.format !== "tyrants-studio" ||
+      data.version !== 1 ||
+      !Array.isArray(data.cards) ||
+      !data.cards.length ||
+      data.cards.length > 100
+    )
+      throw Error(
+        "Це не проєкт Tyrants Card Studio або в ньому понад 100 карт.",
+      );
+    const cards = data.cards
+      .map(validateCard)
+      .map((c) => ({ ...c, id: crypto.randomUUID() }));
+    state.cards.push(...cards);
+    state.active = state.cards.length - cards.length;
+    await persist();
+    location.hash = "projects";
+    render();
+    toast(`Імпортовано карт: ${cards.length}.`);
+  } catch (err) {
+    toast(err.message || "Не вдалося імпортувати проєкт.", true);
+  }
+}
+try {
+  const d = await database();
+  const saved = await new Promise((resolve) => {
+    const r = d
+      .transaction("workspace")
+      .objectStore("workspace")
+      .get("current");
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => resolve(null);
+  });
+  if (saved?.cards?.length) {
+    state = {
+      cards: saved.cards.map(validateCard),
+      active: Math.min(saved.active || 0, saved.cards.length - 1),
+    };
+  }
+} catch {}
+try {
+  library = await (await fetch("library.json")).json();
+} catch {
+  toast("Бібліотека недоступна. Редактор працює незалежно.", true);
+}
+window.addEventListener("hashchange", () => {
+  packId = null;
+  render();
+  window.scrollTo(0, 0);
+});
+render();

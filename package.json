@@ -1,0 +1,20 @@
+{
+  "name": "tyrants-card-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A print-ready Tyrants of the Underdark card editor and fan expansion library.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "jspdf": "4.2.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "prettier": "3.6.2"
+  }
+}
