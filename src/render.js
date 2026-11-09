@@ -1,4 +1,7 @@
-import { W, H, ASPECTS } from "./model.js";
+import { W, H } from "./model.js";
+import { SYMBOLS } from "./symbols.js";
+import { drawRichText } from "./rich-text.js";
+import { sourceLettering } from "./source-lettering.js";
 const images = new Map();
 export async function getImage(src) {
   if (!src) return null;
@@ -21,46 +24,14 @@ function round(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
 }
-function fitText(ctx, text, max, start, min = 20) {
+function fitText(ctx, text, max, start, min = 16) {
   let size = start;
   while (size > min) {
-    ctx.font = `700 ${size}px CardTitle, Georgia, serif`;
+    ctx.font = `700 ${size}px CardTitle,Georgia,serif`;
     if (ctx.measureText(text).width <= max) break;
     size--;
   }
   return size;
-}
-function wrapped(ctx, text, x, y, width, lineHeight) {
-  let lines = [];
-  for (const paragraph of text.split("\n")) {
-    if (!paragraph) {
-      lines.push("");
-      continue;
-    }
-    let line = "";
-    for (const word of paragraph.split(/\s+/)) {
-      if (ctx.measureText(line + word).width > width && line) {
-        lines.push(line.trimEnd());
-        line = "";
-      }
-      if (ctx.measureText(word).width > width) {
-        for (const c of word) {
-          if (ctx.measureText(line + c).width > width) {
-            lines.push(line);
-            line = "";
-          }
-          line += c;
-        }
-        line += " ";
-      } else line += word + " ";
-    }
-    lines.push(line.trimEnd());
-  }
-  for (const line of lines) {
-    ctx.fillText(line, x, y);
-    y += lineHeight;
-  }
-  return { lines: lines.length, bottom: y };
 }
 function drawCover(ctx, im, rect, card) {
   const s = Math.max(rect.w / im.width, rect.h / im.height) * card.artScale,
@@ -75,7 +46,7 @@ function drawCover(ctx, im, rect, card) {
   ctx.drawImage(im, x, y, w, h);
   ctx.restore();
 }
-function pattern(ctx, color = "#3c2363") {
+function pattern(ctx, color) {
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, W, H);
   ctx.save();
@@ -100,61 +71,74 @@ export async function renderCard(
 ) {
   await Promise.all([
     document.fonts.load("700 44px CardTitle"),
-    document.fonts.load("500 24px Manrope"),
-    document.fonts.load("italic 24px CardBody"),
+    document.fonts.load("400 34px CardRules"),
+    document.fonts.load("700 34px CardRules"),
+    document.fonts.load("italic 34px CardRules"),
+    document.fonts.load("italic 700 34px CardRules"),
   ]);
   const c = canvas || document.createElement("canvas");
   c.width = W;
   c.height = H;
   const ctx = c.getContext("2d");
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = "#070509";
+  ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
-  const [art, icon, backImage] = await Promise.all([
-    getImage(card.art),
-    getImage(card.icon),
-    getImage(card.backImage),
-  ]);
-  let overflow = false;
   ctx.save();
-  round(ctx, 16, 16, W - 32, H - 32, 37);
+  round(ctx, 0, 0, W, H, 52);
   ctx.clip();
   if (back) {
-    if (card.backMode === "original") {
-      const original = await getImage("assets/original-card-back.webp");
-      ctx.drawImage(original, 16, 16, W - 32, H - 32);
-    } else if (card.backMode === "image" && backImage)
+    if (card.backMode === "original")
+      ctx.drawImage(
+        await getImage("assets/original-card-back.webp"),
+        0,
+        0,
+        W,
+        H,
+      );
+    else if (card.backMode === "image" && card.backImage)
       drawCover(
         ctx,
-        backImage,
-        { x: 16, y: 16, w: W - 32, h: H - 32 },
+        await getImage(card.backImage),
+        { x: 0, y: 0, w: W, h: H },
         { artScale: 1, artX: 0, artY: 0 },
       );
     else {
       pattern(ctx, card.purple);
       ctx.strokeStyle = "#8c67b0";
       ctx.lineWidth = 2;
-      round(ctx, 42, 42, W - 84, H - 84, 25);
+      round(ctx, 30, 30, W - 60, H - 60, 25);
       ctx.stroke();
       ctx.textAlign = "center";
       ctx.fillStyle = "#fff";
       const title = card.backTitle || (preview ? "НАЗВА КОЛОДИ" : "");
-      ctx.font = `700 ${fitText(ctx, title, W - 140, 66, 22)}px CardTitle,Georgia,serif`;
+      ctx.font = `700 ${fitText(ctx, title, W - 140, 66)}px CardTitle,Georgia,serif`;
       ctx.fillText(title, W / 2, H / 2 + 10);
-      ctx.font = "400 23px Manrope, sans-serif";
+      ctx.font = "400 23px CardRules,Arial,sans-serif";
       ctx.fillStyle = "#d7c8ea";
       ctx.fillText(card.backSubtitle, W / 2, H / 2 + 64);
     }
     ctx.restore();
     return { canvas: c, overflow: false };
   }
+  const [atlas, art, aspect, deck, ring] = await Promise.all([
+    getImage("assets/card-parts/glyphs.png"),
+    getImage(card.art),
+    getImage(card.icon || SYMBOLS[card.aspect]?.image),
+    getImage(
+      card.deckMark === "none"
+        ? ""
+        : card.deckIcon || "assets/card-parts/deck-faerie.png",
+    ),
+    getImage("assets/card-parts/inner-ring.png"),
+  ]);
   const gradient = ctx.createLinearGradient(0, 0, 0, H);
   gradient.addColorStop(0, card.purple);
-  gradient.addColorStop(0.48, "#21132e");
-  gradient.addColorStop(1, "#060508");
+  gradient.addColorStop(0.42, card.purple);
+  gradient.addColorStop(0.8, "#09060f");
+  gradient.addColorStop(0.93, "#000");
   ctx.fillStyle = gradient;
-  ctx.fillRect(16, 16, W - 32, H - 32);
-  const ar = { x: 48, y: 164, w: 654, h: 474 };
+  ctx.fillRect(0, 0, W, H);
+  const ar = { x: 46, y: 162, w: 658, h: 502 };
   if (art) drawCover(ctx, art, ar, card);
   else {
     ctx.fillStyle = "#241e2e";
@@ -166,101 +150,150 @@ export async function renderCard(
       ctx.setLineDash([]);
       ctx.fillStyle = "#a798b4";
       ctx.textAlign = "center";
-      ctx.font = "500 21px Manrope,sans-serif";
+      ctx.font = "400 21px Manrope,sans-serif";
       ctx.fillText("ДОДАЙТЕ ІЛЮСТРАЦІЮ", W / 2, ar.y + ar.h / 2);
     }
   }
-  ctx.textAlign = "left";
   ctx.fillStyle = "#fff";
-  const name = card.name || (preview ? "Назва карти" : "");
-  ctx.font = `700 ${fitText(ctx, name, 555, 44, 20)}px CardTitle,Georgia,serif`;
-  ctx.fillText(name, 48, 96);
-  ctx.textAlign = "right";
-  ctx.font = "700 38px CardTitle,Georgia,serif";
-  ctx.fillText(card.cost || "", 702, 96);
-  ctx.font = `700 ${fitText(ctx, card.type, 260, 27, 18)}px CardTitle,Georgia,serif`;
-  ctx.fillText(card.type || (preview ? "ТИП" : ""), 702, 146);
   ctx.textAlign = "left";
-  ctx.font = `700 ${fitText(ctx, card.aspectText, 370, 28, 18)}px CardTitle,Georgia,serif`;
-  ctx.fillText(card.aspectText || (preview ? "АСПЕКТ" : ""), 146, 146);
+  sourceLettering(ctx, atlas, card.name || (preview ? "Назва карти" : ""), {
+    x: 47,
+    y: 98,
+    maxWidth: 565,
+  });
+  sourceLettering(ctx, atlas, card.cost, {
+    x: 704,
+    y: 98,
+    kind: "number",
+    align: "right",
+    maxWidth: 110,
+  });
+  sourceLettering(ctx, atlas, card.aspectText || (preview ? "АСПЕКТ" : ""), {
+    x: 132,
+    y: 151,
+    kind: "meta",
+    maxWidth: 360,
+  });
+  sourceLettering(ctx, atlas, card.type || (preview ? "ТИП" : ""), {
+    x: 704,
+    y: 151,
+    kind: "race",
+    align: "right",
+    maxWidth: 260,
+  });
   ctx.beginPath();
-  ctx.arc(88, 171, 42, 0, Math.PI * 2);
-  ctx.fillStyle = "#08080a";
+  ctx.arc(88, 168, 42, 0, Math.PI * 2);
+  ctx.fillStyle = "#000";
   ctx.fill();
-  ctx.lineWidth = 4;
   ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 3;
   ctx.stroke();
-  if (icon) {
+  if (aspect && card.icon) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(88, 171, 34, 0, Math.PI * 2);
+    ctx.arc(88, 168, 36, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(icon, 54, 137, 68, 68);
+    const ratio = Math.min(68 / aspect.width, 68 / aspect.height),
+      w = aspect.width * ratio,
+      h = aspect.height * ratio;
+    ctx.drawImage(aspect, 88 - w / 2, 168 - h / 2, w, h);
     ctx.restore();
-  } else {
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    ctx.font = "700 49px Georgia, serif";
-    ctx.fillText(ASPECTS[card.aspect]?.symbol || "", 88, 187);
+  } else if (aspect) ctx.drawImage(aspect, 39, 119, 99, 100);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(46, 674, 658, 260);
+  // The short teeth are part of the source frame, not symbols typed into the effect.
+  ctx.fillStyle = "#08060b";
+  ctx.fillRect(46, 664, 658, 10);
+  for (const x of [156, 265, 374, 483, 592]) {
+    ctx.beginPath();
+    ctx.moveTo(x - 9, 664);
+    ctx.lineTo(x + 9, 664);
+    ctx.lineTo(x, 691);
+    ctx.closePath();
+    ctx.fill();
   }
-  ctx.fillStyle = "#fffefa";
-  ctx.fillRect(48, 638, 654, 298);
   ctx.save();
   ctx.beginPath();
-  ctx.rect(60, 650, 630, 272);
+  ctx.rect(58, 686, 634, 234);
   ctx.clip();
-  const size = card.fontSize;
   ctx.textAlign = "left";
-  ctx.fillStyle = "#161318";
-  ctx.font = `500 ${size}px Manrope,sans-serif`;
-  let body = wrapped(ctx, card.effect, 70, 674, 610, size * 1.4);
-  let bottom = body.bottom;
+  ctx.fillStyle = "#080808";
+  const size = card.fontSize;
+  const rules = await drawRichText(ctx, card.effect, {
+    x: 67,
+    y: 716,
+    width: 616,
+    size,
+    customSymbols: card.customSymbols,
+    getImage,
+  });
+  let bottom = rules.bottom;
   if (card.flavour) {
-    ctx.font = `italic ${size}px CardBody,Georgia,serif`;
-    ctx.fillStyle = "#4e4751";
-    body = wrapped(ctx, card.flavour, 70, bottom + 17, 610, size * 1.35);
-    bottom = body.bottom;
+    const flavour = await drawRichText(ctx, card.flavour, {
+      x: 67,
+      y: card.effect ? rules.baseline + size * 1.55 : 716,
+      width: 616,
+      size,
+      italic: true,
+      widthScale: 0.86,
+      customSymbols: card.customSymbols,
+      getImage,
+    });
+    bottom = flavour.bottom;
   }
-  overflow = bottom > 924;
+  const overflow = bottom > 920;
   ctx.restore();
   if (preview && !card.effect && !card.flavour) {
-    ctx.font = "400 22px Manrope,sans-serif";
+    ctx.font = "400 25px CardRules,Arial,sans-serif";
     ctx.fillStyle = "#aaa1a9";
-    ctx.fillText("Ефект карти та художній текст", 70, 681);
+    ctx.fillText("Ефект карти та художній текст", 67, 718);
   }
+  ctx.fillStyle = "#fff";
   if (card.deckVP) {
-    ctx.fillStyle = "#080809";
-    round(ctx, 548, 903, 49, 74, 10);
+    ctx.fillStyle = "#000";
+    round(ctx, 540, 898, 57, 84, 11);
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 3;
     ctx.stroke();
-    ctx.textAlign = "center";
     ctx.fillStyle = "#fff";
-    ctx.font = "700 51px CardTitle,Georgia,serif";
-    ctx.fillText(card.deckVP, 572, 958);
+    sourceLettering(ctx, atlas, card.deckVP, {
+      x: 568,
+      y: 963,
+      kind: "number",
+      align: "center",
+      scale: 1.05,
+      maxWidth: 43,
+    });
   }
   if (card.innerVP) {
     ctx.beginPath();
-    ctx.arc(652, 942, 40, 0, Math.PI * 2);
+    ctx.arc(647, 939, 39, 0, Math.PI * 2);
     ctx.fillStyle = card.purple;
     ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 4;
-    ctx.stroke();
+    ctx.drawImage(ring, 598, 889, 100, 101);
     ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    ctx.font = "700 48px CardTitle,Georgia,serif";
-    ctx.fillText(card.innerVP, 652, 958);
+    sourceLettering(ctx, atlas, card.innerVP, {
+      x: 647,
+      y: 962,
+      kind: "number",
+      align: "center",
+      scale: 1.07,
+      maxWidth: 66,
+    });
   }
-  ctx.fillStyle = "#e0d3ec";
+  if (deck) ctx.drawImage(deck, 49, 951, 55, 55);
   ctx.textAlign = "left";
-  ctx.font = "400 14px Manrope,sans-serif";
-  ctx.fillText(card.footer.slice(0, 90), 49, 1000);
+  ctx.fillStyle = "#fff";
+  ctx.font = "italic 30px CardRules,Arial,sans-serif";
+  ctx.fillText(card.cardNumber || "", 130, 989, 190);
+  ctx.textAlign = "right";
+  ctx.font = "400 23px CardRules,Arial,sans-serif";
+  ctx.fillText(card.footer.slice(0, 90), 704, 1016, 520);
   const count = Math.min(8, Math.max(0, parseInt(card.copies) || 0));
   for (let i = 0; i < count; i++) {
     ctx.beginPath();
-    ctx.arc(W / 2 - (count - 1) * 10 + i * 20, 989, 4, 0, Math.PI * 2);
+    ctx.arc(W / 2 - (count - 1) * 20 + i * 40, 978, 8, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();

@@ -1,6 +1,7 @@
 import { blankCard, validateCard, ASPECTS, safeName } from "./model.js";
 import { renderCard, getImage } from "./render.js";
 import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
+import { SYMBOLS, symbolToken } from "./symbols.js";
 const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const e = (v) =>
@@ -88,9 +89,23 @@ function header(route) {
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
 }
+function symbolButton(key, target) {
+  const s = SYMBOLS[key];
+  return `<button type="button" class="symbol-button" data-insert-symbol="${e(symbolToken(key))}" data-target="${target}" title="${e(s.label)}" aria-label="${e(s.label)}">${s.image ? `<img src="${s.image}" alt="">` : `<span>${s.text}</span>`}</button>`;
+}
+function richField(label, key, placeholder, max) {
+  return `<div class="rich-field">${field(label, key, { area: true, placeholder, max })}<div class="text-tools" role="group" aria-label="Форматування: ${label}"><button class="symbol-button" data-format="**" data-target="${key}" aria-label="Жирний текст"><b>B</b></button><button class="symbol-button" data-format="*" data-target="${key}" aria-label="Курсив"><i>I</i></button>${["influence", "power", "arrow", "bullet", "plus"].map((s) => symbolButton(s, key)).join("")}</div><details class="more-symbols"><summary>Інші символи та власні значки</summary><div class="symbol-options">${["obedience", "malice", "ambition", "conquest", "guile", "vp", "infinity"].map((s) => symbolButton(s, key)).join("")}${card()
+    .customSymbols.map(
+      (s) =>
+        `<button class="symbol-button" data-insert-symbol="[icon:${s.id}]" data-target="${key}" aria-label="${e(s.name)}" title="${e(s.name)}"><img src="${e(s.data)}" alt=""></button>`,
+    )
+    .join(
+      "",
+    )}</div><button class="button ghost small" data-upload-symbol="${key}">${icon("upload", 14)} Завантажити свій значок</button><div class="unicode-insert"><input id="unicode-${key}" placeholder="Наприклад: ∞ ◆ ♥" maxlength="16" aria-label="Власні текстові символи"><button class="button small ghost" data-insert-unicode="${key}">Вставити</button></div></details></div>`;
+}
 function panel() {
   if (tab === "text")
-    return `<div class="panel-caption">01 / ТЕКСТ КАРТИ</div>${field("Назва", "name", { placeholder: "Наприклад, High Priestess", max: 65 })}<div class="field-row">${field("Вартість", "cost", { placeholder: "—", max: 4 })}${field("Тип / раса", "type", { placeholder: "Drow", max: 35 })}</div>${field("Назва аспекту", "aspectText", { placeholder: "Obedience", max: 35 })}${field("Ефект карти", "effect", { area: true, placeholder: "Напишіть дію та її умови…", max: 1500 })}${field("Художній текст", "flavour", { area: true, placeholder: "Цитата або коротка історія…", max: 900 })}<div class="field-row">${field("Очки в колоді", "deckVP", { placeholder: "1", max: 3 })}${field("Внутрішнє коло", "innerVP", { placeholder: "3", max: 3 })}</div><div class="field-row">${field("Кількість крапок", "copies", { placeholder: "1–8", max: 1 })}${field("Підпис унизу", "footer", { placeholder: "Автор / номер", max: 90 })}</div><label class="field range"><span>Розмір тексту <b>${card().fontSize} px</b></span><input data-key="fontSize" type="range" min="17" max="34" value="${card().fontSize}"></label>`;
+    return `<div class="panel-caption">01 / ТЕКСТ КАРТИ</div>${field("Назва", "name", { placeholder: "Наприклад, High Priestess", max: 65 })}<div class="field-row">${field("Вартість", "cost", { placeholder: "—", max: 4 })}${field("Тип / раса", "type", { placeholder: "Drow", max: 35 })}</div>${field("Назва аспекту", "aspectText", { placeholder: "Obedience", max: 35 })}${richField("Ефект карти", "effect", "Напишіть дію та її умови…", 1500)}${richField("Художній текст", "flavour", "Цитата або коротка історія…", 900)}<p class="markup-help">Кнопки вставляють символ у місце курсора. **Текст** — жирний, *текст* — курсив. Коди [influence] і [power] у прев’ю та файлах стають значками.</p><div class="field-row">${field("Очки в колоді", "deckVP", { placeholder: "1", max: 3 })}${field("Внутрішнє коло", "innerVP", { placeholder: "3", max: 3 })}</div><div class="field-row">${field("Кількість крапок", "copies", { placeholder: "1–8", max: 1 })}${field("Номер карти", "cardNumber", { placeholder: "1/40", max: 18 })}</div>${field("Підпис праворуч унизу", "footer", { placeholder: "© 2020 Wizards", max: 90 })}<label class="field range"><span>Розмір тексту <b>${card().fontSize} px</b></span><input data-key="fontSize" type="range" min="17" max="46" value="${card().fontSize}"></label>`;
   if (tab === "art")
     return `<div class="panel-caption">02 / ІЛЮСТРАЦІЯ</div><button class="upload-box" data-upload="art">${icon("image", 34)}<strong>${card().art ? "Змінити зображення" : "Додати ілюстрацію"}</strong><span>PNG, JPG або WebP · до 15 МБ</span></button><p class="muted">Зображення заповнює вікно карти. Зсуньте та збільште його, щоб вибрати композицію.</p>${[
       ["artScale", "Масштаб", 1, 3, 0.01],
@@ -110,11 +125,11 @@ function panel() {
     )
       .map(
         ([key, v]) =>
-          `<button data-aspect="${key}" class="aspect ${card().aspect === key ? "selected" : ""}" aria-pressed="${card().aspect === key}"><span>${v.symbol || "—"}</span>${v.label}</button>`,
+          `<button data-aspect="${key}" class="aspect ${card().aspect === key ? "selected" : ""}" aria-pressed="${card().aspect === key}"><span>${SYMBOLS[key]?.image ? `<img src="${SYMBOLS[key].image}" alt="">` : "—"}</span>${v.label}</button>`,
       )
       .join(
         "",
-      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}<label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
+      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}<div class="deck-mark-settings"><h3>Знак колоди · зліва внизу</h3><label class="field"><span>Відображення</span><select data-key="deckMark"><option value="faerie" ${card().deckMark !== "none" ? "selected" : ""}>Знак Faerie / власний</option><option value="none" ${card().deckMark === "none" ? "selected" : ""}>Без знака</option></select></label><button class="button ghost small" data-upload="deckIcon">${icon("upload", 14)} Свій знак колоди</button>${card().deckIcon ? '<button class="text-button" data-clear="deckIcon">Повернути знак Faerie</button>' : ""}</div><label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
   return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Фіолетовий візерунок</option><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна Minion</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : '<div class="info-note">Сорочка з наявних компонентів Tyrants of the Underdark.</div>'}`;
 }
 function editor() {
@@ -255,6 +270,35 @@ function render() {
     });
 }
 function bind() {
+  $$("[data-insert-symbol]").forEach(
+    (n) =>
+      (n.onclick = () => insertText(n.dataset.target, n.dataset.insertSymbol)),
+  );
+  $$("[data-format]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        const input = $(`[data-key="${n.dataset.target}"]`),
+          a = input.selectionStart,
+          b = input.selectionEnd;
+        if (a === b) {
+          toast("Спочатку виділіть текст, який потрібно форматувати.");
+          return;
+        }
+        const mark = n.dataset.format;
+        insertText(n.dataset.target, mark + input.value.slice(a, b) + mark);
+      }),
+  );
+  $$("[data-insert-unicode]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        const key = n.dataset.insertUnicode,
+          value = $(`#unicode-${key}`).value;
+        if (value) insertText(key, value);
+      }),
+  );
+  $$("[data-upload-symbol]").forEach(
+    (n) => (n.onclick = () => uploadSymbol(n.dataset.uploadSymbol)),
+  );
   $$("[data-key]").forEach((n) =>
     n.addEventListener(
       n.type === "range" ||
@@ -328,7 +372,7 @@ function bind() {
     };
   if ($("#duplicate"))
     $("#duplicate").onclick = () => {
-      state.cards.push({ ...card(), id: crypto.randomUUID() });
+      state.cards.push({ ...structuredClone(card()), id: crypto.randomUUID() });
       state.active = state.cards.length - 1;
       persist();
       render();
@@ -479,12 +523,61 @@ async function upload(key) {
     canvas.height = Math.round(im.height * s);
     canvas.getContext("2d").drawImage(im, 0, 0, canvas.width, canvas.height);
     card()[key] = canvas.toDataURL(
-      key === "icon" ? "image/png" : "image/jpeg",
+      ["icon", "deckIcon"].includes(key) ? "image/png" : "image/jpeg",
       0.94,
     );
     if (key === "art") Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
+    if (key === "deckIcon") card().deckMark = "faerie";
     changed();
     render();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+function insertText(key, value, selection) {
+  const input = $(`[data-key="${key}"]`);
+  if (!input) return;
+  if (selection) input.setSelectionRange(selection[0], selection[1]);
+  if (
+    input.value.length -
+      (input.selectionEnd - input.selectionStart) +
+      value.length >
+    input.maxLength
+  ) {
+    toast("У полі недостатньо місця для цього фрагмента.", true);
+    return;
+  }
+  input.setRangeText(value, input.selectionStart, input.selectionEnd, "end");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus();
+}
+async function uploadSymbol(target) {
+  try {
+    if (card().customSymbols.length >= 24)
+      throw Error("На одну карту можна додати до 24 власних значків.");
+    const input = $(`[data-key="${target}"]`),
+      selection = [input.selectionStart, input.selectionEnd],
+      f = await filePicker("image/png,image/jpeg,image/webp");
+    if (!f) return;
+    if (
+      !["image/png", "image/jpeg", "image/webp"].includes(f.type) ||
+      f.size > 5 * 1048576
+    )
+      throw Error("Оберіть PNG, JPG або WebP до 5 МБ.");
+    const im = await getImage(await blobData(f)),
+      canvas = document.createElement("canvas"),
+      s = Math.min(1, 192 / Math.max(im.width, im.height));
+    canvas.width = Math.round(im.width * s);
+    canvas.height = Math.round(im.height * s);
+    canvas.getContext("2d").drawImage(im, 0, 0, canvas.width, canvas.height);
+    const id = "s" + crypto.randomUUID().replaceAll("-", "").slice(0, 12);
+    card().customSymbols.push({
+      id,
+      name: f.name.replace(/\.[^.]+$/, "").slice(0, 40),
+      data: canvas.toDataURL("image/png"),
+    });
+    render();
+    insertText(target, `[icon:${id}]`, selection);
   } catch (err) {
     toast(err.message, true);
   }

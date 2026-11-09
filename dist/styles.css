@@ -24,6 +24,123 @@
   font-weight: 400 700;
   font-display: swap;
 }
+@font-face {
+  font-family: CardRules;
+  src: url(assets/card-rules.ttf) format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: CardRules;
+  src: url(assets/card-rules-italic.ttf) format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+.rich-field {
+  margin-bottom: 18px;
+}
+.rich-field > .field {
+  margin-bottom: 7px;
+}
+.text-tools,
+.symbol-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.symbol-button {
+  width: 32px;
+  height: 34px;
+  border-radius: 4px;
+  background: #f3eff5;
+  color: #18131f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #635173;
+  font:
+    20px Georgia,
+    serif;
+  padding: 5px;
+  flex-shrink: 0;
+}
+.symbol-button img {
+  width: 23px;
+  height: 23px;
+  object-fit: contain;
+}
+.symbol-button:hover {
+  background: #d4bce8;
+  border-color: #cbb4e5;
+}
+.more-symbols {
+  font-size: 10px;
+  margin-top: 9px;
+}
+.more-symbols summary {
+  color: #c7afe8;
+  cursor: pointer;
+  padding: 5px 0;
+}
+.more-symbols .symbol-options {
+  margin: 10px 0;
+}
+.more-symbols > .button {
+  margin-top: 5px;
+}
+.unicode-insert {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+.unicode-insert input {
+  width: 100%;
+  font-size: 12px;
+}
+.markup-help {
+  font-size: 9px;
+  line-height: 1.8;
+  margin: -2px 0 18px;
+  color: #9d8cab;
+}
+.deck-mark-settings {
+  border-top: 1px solid #41364d;
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.deck-mark-settings h3 {
+  font-size: 11px;
+  font-weight: 500;
+}
+.aspect span img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.aspect span {
+  width: 30px;
+}
+.aspect {
+  min-height: 53px;
+}
+@media (min-width: 1031px) {
+  .preview-panel,
+  .export-panel {
+    position: sticky;
+    top: 20px;
+  }
+}
+@media (max-width: 700px) {
+  .symbol-button {
+    width: 36px;
+    height: 40px;
+  }
+  .unicode-insert input {
+    font-size: 16px;
+  }
+}
 :root {
   color-scheme: dark;
   --bg: #100e15;

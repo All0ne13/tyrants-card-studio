@@ -50,9 +50,41 @@ test("project import rejects external images and clamps transforms", () => {
     aspect: "unknown",
     purple: "red",
   });
-  assert.equal(c.fontSize, 34);
+  assert.equal(c.fontSize, 46);
   assert.equal(c.artScale, 1);
   assert.equal(c.artX, 100);
   assert.equal(c.aspect, "none");
-  assert.equal(c.purple, "#3c2363");
+  assert.equal(c.purple, "#36235e");
+});
+test("legacy cards keep user content while gaining the source layout", () => {
+  const c = validateCard({
+    name: "Existing card",
+    effect: "My rule",
+    fontSize: 24,
+    purple: "#3c2363",
+  });
+  assert.equal(c.name, "Existing card");
+  assert.equal(c.effect, "My rule");
+  assert.equal(c.fontSize, 34);
+  assert.equal(c.layoutVersion, 2);
+  assert.equal(c.cardNumber, "");
+  assert.deepEqual(c.customSymbols, []);
+});
+test("custom symbols reject external URLs and unsafe token names", () => {
+  assert.throws(() =>
+    validateCard({
+      customSymbols: [{ id: "x", data: "https://example.com/x.png" }],
+    }),
+  );
+  assert.throws(() =>
+    validateCard({
+      customSymbols: [{ id: "x]test", data: "data:image/png;base64,AA==" }],
+    }),
+  );
+  const c = validateCard({
+    customSymbols: [
+      { id: "my_icon", name: "My icon", data: "data:image/png;base64,AA==" },
+    ],
+  });
+  assert.equal(c.customSymbols[0].id, "my_icon");
 });

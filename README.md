@@ -6,6 +6,8 @@ A browser-based card constructor and fan-material library for **Tyrants of the U
 
 - Blank front template with a fixed purple frame, aspect circle, title, cost, type, rules, flavour, victory points and footer.
 - Upload artwork, adjust crop and zoom, choose a symbol or upload a custom icon.
+- Source-derived Latin title lettering, card proportions, aspect symbols and the bottom-left deck mark with an editable card number.
+- Inline Influence/Power symbols, aspect icons, Unicode characters and uploaded custom symbols. Insert at the cursor; apply bold or italic to selected text. Saved tokens such as `[influence]` render as icons in preview and print exports.
 - Original Minion back, editable purple-pattern back or uploaded back image.
 - Automatic local IndexedDB saves; JSON import/export for moving projects between devices.
 - Exact **63.5 × 88 mm PDF**, PNG with physical-size metadata, ZIP of individual images, and A4 sheets with crop marks and mirrored back positions for long-edge duplex printing.
@@ -30,6 +32,8 @@ npm test
 ```
 
 `scripts/check-browser.mjs` is a local browser-verification harness. Adjust its Chrome and Playwright locations to run it on another computer. Its screenshots and generated test files are excluded from Git.
+
+`scripts/check-card-fidelity.mjs` rebuilds the supplied Gremlin reference from editable fields and checks cursor insertion, formatting, custom-symbol persistence, exports and responsive layouts. `scripts/prepare-card-components.py` documents how the source-derived Latin lettering and icon assets were recovered from the supplied raster cards. Non-Latin or unavailable title glyphs use the bundled serif fallback; the rules font supports Cyrillic.
 
 ## Printing
 
