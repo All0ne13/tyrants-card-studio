@@ -1,0 +1,8 @@
+/* Complete source fonts from the supplied creation kit; card rendering only. */
+@font-face { font-family:TyrantsTitle; src:url("modesto-bold-7b810345aa.woff2") format("woff2"); font-weight:700; font-style:normal; font-display:block; }
+@font-face { font-family:TyrantsCondensedLight; src:url("modesto-light-6edd80afd8.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:block; }
+@font-face { font-family:TyrantsExpanded; src:url("modesto-expanded-f399665b83.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:block; }
+@font-face { font-family:TyrantsRules; src:url("scala-regular-ccb5e20f2c.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:block; }
+@font-face { font-family:TyrantsRules; src:url("scala-italic-30741c2af3.woff2") format("woff2"); font-weight:400; font-style:italic; font-display:block; }
+@font-face { font-family:TyrantsRules; src:url("scala-bold-italic-76060f6509.woff2") format("woff2"); font-weight:700; font-style:italic; font-display:block; }
+@font-face { font-family:TyrantsFigures; src:url("scala-figures-313488c00f.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:block; }

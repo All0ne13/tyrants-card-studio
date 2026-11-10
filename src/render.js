@@ -4,6 +4,7 @@ import { DECK_MARKS } from "./deck-marks.js";
 import { SYMBOLS } from "./symbols.js";
 import { drawRichText } from "./rich-text.js";
 import { sourceLettering } from "./source-lettering.js";
+import { loadCardFonts, RULE_TYPE } from "./card-typography.js";
 const images = new Map();
 export async function getImage(src) {
   if (!src) return null;
@@ -29,7 +30,7 @@ function round(ctx, x, y, w, h, r) {
 function fitText(ctx, text, max, start, min = 16) {
   let size = start;
   while (size > min) {
-    ctx.font = `700 ${size}px CardTitle,Georgia,serif`;
+    ctx.font = `700 ${size}px TyrantsTitle,CardTitle,serif`;
     if (ctx.measureText(text).width <= max) break;
     size--;
   }
@@ -73,11 +74,14 @@ export async function renderCard(
 ) {
   await Promise.all([
     document.fonts.load("400 25px Manrope"),
-    document.fonts.load("700 44px CardTitle"),
-    document.fonts.load("400 34px CardRules"),
-    document.fonts.load("700 34px CardRules"),
-    document.fonts.load("italic 34px CardRules"),
-    document.fonts.load("italic 700 34px CardRules"),
+    // The original fonts have no Cyrillic glyphs. Keep the established
+    // Cyrillic fallback for Ukrainian cards and additional Unicode symbols.
+    document.fonts.load("700 44px CardTitle", "Назва 123"),
+    document.fonts.load("400 34px CardRules", "Текст ►"),
+    document.fonts.load("700 34px CardRules", "Текст"),
+    document.fonts.load("italic 34px CardRules", "Текст"),
+    document.fonts.load("italic 700 34px CardRules", "Текст"),
+    loadCardFonts(),
   ]);
   const c = canvas || document.createElement("canvas");
   c.width = W;
@@ -114,9 +118,9 @@ export async function renderCard(
       ctx.textAlign = "center";
       ctx.fillStyle = "#fff";
       const title = card.backTitle || (preview ? t("НАЗВА КОЛОДИ") : "");
-      ctx.font = `700 ${fitText(ctx, title, W - 140, 66)}px CardTitle,Georgia,serif`;
+      ctx.font = `700 ${fitText(ctx, title, W - 140, 66)}px TyrantsTitle,CardTitle,serif`;
       ctx.fillText(title, W / 2, H / 2 + 10);
-      ctx.font = "400 23px CardRules,Arial,sans-serif";
+      ctx.font = "400 23px TyrantsRules,CardRules,sans-serif";
       ctx.fillStyle = "#d7c8ea";
       ctx.fillText(card.backSubtitle, W / 2, H / 2 + 64);
     }
@@ -163,25 +167,25 @@ export async function renderCard(
   ctx.textAlign = "left";
   sourceLettering(ctx, null, card.name || (preview ? t("Назва карти") : ""), {
     x: 47,
-    y: 98,
+    y: 96,
     maxWidth: 565,
   });
   sourceLettering(ctx, null, card.cost, {
     x: 704,
-    y: 98,
-    kind: "number",
+    y: 100,
+    kind: "cost",
     align: "right",
     maxWidth: 110,
   });
   sourceLettering(ctx, null, card.aspectText || (preview ? t("АСПЕКТ") : ""), {
     x: 132,
-    y: 151,
+    y: 150,
     kind: "meta",
     maxWidth: 360,
   });
   sourceLettering(ctx, null, card.type || (preview ? t("ТИП") : ""), {
     x: 704,
-    y: 151,
+    y: 145,
     kind: "race",
     align: "right",
     maxWidth: 260,
@@ -226,14 +230,14 @@ export async function renderCard(
   const size = card.fontSize;
   const rules = await drawRichText(ctx, card.effect, {
     x: 67,
-    y: whiteTop + 42,
+    y: whiteTop + 44,
     width: 616,
     size,
     customSymbols: card.customSymbols,
     getImage,
   });
   let bottom = rules.bottom;
-  const flavourY = card.effect ? rules.baseline + size * 1.55 : whiteTop + 42;
+  const flavourY = card.effect ? rules.baseline + size * 1.55 : whiteTop + 44;
   if (card.flavour) {
     const flavour = await drawRichText(ctx, card.flavour, {
       x: 67,
@@ -241,7 +245,7 @@ export async function renderCard(
       width: 616,
       size,
       italic: true,
-      widthScale: 0.86,
+      widthScale: RULE_TYPE.flavourWidthScale,
       customSymbols: card.customSymbols,
       getImage,
     });
@@ -265,10 +269,9 @@ export async function renderCard(
     ctx.fillStyle = "#fff";
     sourceLettering(ctx, null, card.deckVP, {
       x: 568,
-      y: 963,
-      kind: "number",
+      y: 958,
+      kind: "deckVP",
       align: "center",
-      fontSize: 51,
       maxWidth: 43,
     });
   }
@@ -281,10 +284,9 @@ export async function renderCard(
     ctx.fillStyle = "#fff";
     sourceLettering(ctx, null, card.innerVP, {
       x: 647,
-      y: 962,
-      kind: "number",
+      y: 957,
+      kind: "innerVP",
       align: "center",
-      fontSize: 48,
       maxWidth: 66,
     });
   }
@@ -296,10 +298,10 @@ export async function renderCard(
   }
   ctx.textAlign = "left";
   ctx.fillStyle = "#fff";
-  ctx.font = "italic 30px CardRules,Arial,sans-serif";
+  ctx.font = "italic 30px TyrantsRules,CardRules,sans-serif";
   ctx.fillText(cardNumberLabel(card), 130, 989, 190);
   ctx.textAlign = "right";
-  ctx.font = "400 23px CardRules,Arial,sans-serif";
+  ctx.font = "400 21.5px TyrantsFigures,CardRules,sans-serif";
   ctx.fillText(card.footer.slice(0, 90), 704, 1016, 520);
   const count = Math.min(8, Math.max(0, parseInt(card.copies) || 0));
   for (let i = 0; i < count; i++) {

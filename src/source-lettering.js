@@ -1,11 +1,6 @@
-// The original complete card typeface: one text run for letters, digits and
-// punctuation, without assembling individual characters from scanned cards.
-const styles = {
-  title: { size: 44, minimum: 20 },
-  meta: { size: 28, minimum: 18 },
-  race: { size: 27, minimum: 18 },
-  number: { size: 38, minimum: 18 },
-};
+import { CARD_TYPE } from "./card-typography.js";
+
+// Preserve the PSD's complete font, tracking, horizontal scale and faux bold.
 
 export function sourceLettering(
   ctx,
@@ -23,18 +18,34 @@ export function sourceLettering(
 ) {
   const value = String(text ?? "");
   if (!value) return 0;
-  const style = styles[kind] || styles.title;
+  const style = CARD_TYPE[kind] || CARD_TYPE.title;
   let size = (fontSize || style.size) * scale;
   ctx.save();
   ctx.textAlign = align;
   ctx.textBaseline = "alphabetic";
-  ctx.font = `700 ${size}px CardTitle, Georgia, serif`;
-  while (ctx.measureText(value).width > maxWidth && size > style.minimum) {
-    size = Math.max(style.minimum, size - 1);
-    ctx.font = `700 ${size}px CardTitle, Georgia, serif`;
+  const setFont = () => {
+    ctx.font = `${style.weight} ${size}px ${style.family}, CardTitle, serif`;
+    ctx.letterSpacing = `${size * style.tracking}px`;
+  };
+  setFont();
+  while (
+    ctx.measureText(value).width * style.widthScale > maxWidth &&
+    size > style.minimum
+  ) {
+    size = Math.max(style.minimum, size - 0.5);
+    setFont();
   }
-  const width = Math.min(ctx.measureText(value).width, maxWidth);
-  ctx.fillText(value, x, y, maxWidth);
+  const measured = ctx.measureText(value).width * style.widthScale;
+  const width = Math.min(measured, maxWidth);
+  ctx.translate(x, y);
+  ctx.scale(style.widthScale * Math.min(1, maxWidth / measured), 1);
+  if (style.fauxBold) {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = size * style.fauxBold;
+    ctx.lineJoin = "round";
+    ctx.strokeText(value, 0, 0);
+  }
+  ctx.fillText(value, 0, 0);
   ctx.restore();
   return width;
 }

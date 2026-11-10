@@ -11,6 +11,9 @@ function context() {
     textBaseline: "alphabetic",
     save() {},
     restore() {},
+    translate() {},
+    scale() {},
+    strokeText() {},
     measureText(value) {
       return {
         width: value.length * parseFloat(this.font.split(" ")[1]) * 0.6,
@@ -34,16 +37,9 @@ function context() {
 test("TEST123 keeps letters and digits in one original-font text run", () => {
   const ctx = context();
   sourceLettering(ctx, null, "TEST123", { x: 47, y: 98, maxWidth: 565 });
-  assert.deepEqual(ctx.calls, [
-    {
-      value: "TEST123",
-      x: 47,
-      y: 98,
-      maxWidth: 565,
-      font: "700 44px CardTitle, Georgia, serif",
-      align: "left",
-    },
-  ]);
+  assert.equal(ctx.calls.length, 1);
+  assert.equal(ctx.calls[0].value, "TEST123");
+  assert.match(ctx.calls[0].font, /^700 64\.\d+px TyrantsTitle,/);
 });
 test("mixed case, punctuation and Ukrainian text use a complete typeface", () => {
   for (const value of ["Moon-elf", "A, B — 123", "Тест 123"]) {
@@ -58,7 +54,7 @@ test("mixed case, punctuation and Ukrainian text use a complete typeface", () =>
     assert.equal(ctx.calls.length, 1);
     assert.equal(ctx.calls[0].value, value);
     assert.equal(ctx.calls[0].align, "right");
-    assert.match(ctx.calls[0].font, /CardTitle/);
+    assert.match(ctx.calls[0].font, /TyrantsCondensedLight/);
   }
 });
 test("long labels shrink as a whole and preserve the full text", () => {
@@ -71,7 +67,7 @@ test("long labels shrink as a whole and preserve the full text", () => {
   });
   assert.equal(ctx.calls[0].value, value);
   assert.ok(width <= 210);
-  assert.ok(parseFloat(ctx.calls[0].font.split(" ")[1]) <= 44);
+  assert.ok(parseFloat(ctx.calls[0].font.split(" ")[1]) < 64);
 });
 test("an empty print field remains empty", () => {
   const ctx = context();

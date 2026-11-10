@@ -15,6 +15,9 @@ try {
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const base = process.env.TEST_URL || "http://127.0.0.1:4188/";
+  await page.addInitScript(() =>
+    localStorage.setItem("tyrants-studio-locale", "uk"),
+  );
   await page.goto(base);
   await page.locator('[data-card-edit="cardNumber"]').waitFor();
   if ((await page.locator("#card-number-summary").textContent()) !== "1/40")

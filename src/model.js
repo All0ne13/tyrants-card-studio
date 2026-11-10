@@ -1,4 +1,5 @@
 import { DECK_MARKS } from "./deck-marks.js";
+import { RULE_TYPE } from "./card-typography.js";
 export const CARD_MM = { width: 63.5, height: 88 };
 export const W = 750,
   H = 1040;
@@ -36,7 +37,8 @@ export function blankCard() {
     artY: 0,
     icon: "",
     purple: "#36235e",
-    fontSize: 34,
+    fontSize: RULE_TYPE.defaultSize,
+    typographyVersion: 1,
     rulesHeight: 260,
     layoutVersion: 2,
     backTitle: "",
@@ -62,7 +64,12 @@ export function validateCard(input) {
   card.artScale = Math.max(1, Math.min(3, card.artScale));
   card.artX = Math.max(-100, Math.min(100, card.artX));
   card.artY = Math.max(-100, Math.min(100, card.artY));
-  if (!input.layoutVersion && card.fontSize === 24) card.fontSize = 34;
+  if (
+    !input.typographyVersion &&
+    (card.fontSize === 34 || (!input.layoutVersion && card.fontSize === 24))
+  )
+    card.fontSize = RULE_TYPE.defaultSize;
+  card.typographyVersion = 1;
   card.layoutVersion = 2;
   // Replace only the untouched generated back from earlier projects.
   // Deliberately selected patterns and authored/uploaded backs stay intact.

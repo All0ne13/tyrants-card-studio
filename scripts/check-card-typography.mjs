@@ -108,13 +108,11 @@ try {
   await page.waitForTimeout(500);
   const calls = await page.evaluate(() => window.cardTextCalls);
   assert.ok(
-    calls.some(
-      (c) => c.text === "TEST123" && c.font.includes("44px CardTitle"),
-    ),
+    calls.some((c) => c.text === "TEST123" && c.font.includes("TyrantsTitle")),
   );
   assert.ok(
     calls.some(
-      (c) => c.text === "Moon-elf" && c.font.includes("27px CardTitle"),
+      (c) => c.text === "Moon-elf" && c.font.includes("TyrantsCondensedLight"),
     ),
   );
   await page
@@ -127,14 +125,42 @@ try {
   await page.locator('[data-card-edit="name"]').waitFor();
   assert.equal(await page.locator('[data-key="name"]').inputValue(), "TEST123");
   const fonts = await page.evaluate(() => ({
-    title: document.fonts.check("700 44px CardTitle"),
-    body: document.fonts.check("400 34px CardRules"),
+    title: document.fonts.check("700 65px TyrantsTitle"),
+    cost: document.fonts.check("400 73px TyrantsCondensedLight"),
+    aspect: document.fonts.check("400 30px TyrantsExpanded"),
+    body: document.fonts.check("400 32.4px TyrantsRules"),
+    italic: document.fonts.check("italic 400 32.4px TyrantsRules"),
+    boldItalic: document.fonts.check("italic 700 32.4px TyrantsRules"),
+    footer: document.fonts.check("400 21.5px TyrantsFigures"),
     interface: document.fonts.check("400 25px Manrope"),
   }));
   assert.ok(Object.values(fonts).every(Boolean));
+  const sourceFaces = await page.evaluate(() =>
+    [...document.fonts]
+      .filter((face) => face.family.startsWith("Tyrants"))
+      .map(({ family, weight, style, status }) => ({
+        family,
+        weight,
+        style,
+        status,
+      })),
+  );
+  assert.equal(sourceFaces.length, 7);
+  assert.ok(
+    sourceFaces.every((face) => face.status === "loaded"),
+    "Every original font must finish loading before drawing or exporting",
+  );
+  assert.ok(
+    (
+      await page
+        .locator("body")
+        .evaluate((el) => getComputedStyle(el).fontFamily)
+    ).includes("Manrope"),
+    "Card fonts must not replace interface typography",
+  );
   const figures = await page.evaluate(() => {
     const ctx = document.createElement("canvas").getContext("2d");
-    ctx.font = "700 44px CardTitle";
+    ctx.font = "700 65px TyrantsTitle";
     const letters = ctx.measureText("TEST"),
       digits = ctx.measureText("123");
     return {
@@ -166,6 +192,7 @@ try {
         passed: true,
         base,
         fonts,
+        sourceFaces,
         widths: [1440, 768, 390, 320],
         savedContentPreserved: true,
         errors,

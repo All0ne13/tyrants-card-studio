@@ -1,4 +1,5 @@
 import { SYMBOLS } from "./symbols.js";
+import { RULE_TYPE } from "./card-typography.js";
 
 // Tokens stay plain text in saved projects; HTML is never evaluated.
 export function tokenizeText(text, customSymbols = []) {
@@ -60,12 +61,15 @@ export async function drawRichText(
     size,
     italic = false,
     widthScale = 1,
+    tracking = italic ? RULE_TYPE.flavourTracking : RULE_TYPE.tracking,
     customSymbols = [],
     getImage,
   },
 ) {
+  ctx.save();
+  ctx.letterSpacing = `${size * tracking}px`;
   const tokens = tokenizeText(text, customSymbols),
-    lineHeight = size * 1.19;
+    lineHeight = size * RULE_TYPE.leading;
   let cursor = x,
     baseline = y,
     lastBottom = y - size,
@@ -76,7 +80,7 @@ export async function drawRichText(
     lines++;
   };
   const font = (t) =>
-    `${italic || t.italic ? "italic " : ""}${t.bold ? 700 : 400} ${size}px CardRules, Arial, sans-serif`;
+    `${italic || t.italic ? "italic " : ""}${t.bold ? 700 : 400} ${size}px ${RULE_TYPE.family}, CardRules, sans-serif`;
   const textWidth = (value) => ctx.measureText(value).width * widthScale;
   const paintText = (value, px, py) => {
     ctx.save();
@@ -134,5 +138,6 @@ export async function drawRichText(
       if (!space) lastBottom = baseline + size * 0.25;
     }
   }
+  ctx.restore();
   return { baseline, bottom: lastBottom, lines };
 }

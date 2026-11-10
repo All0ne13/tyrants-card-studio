@@ -90,11 +90,24 @@ test("legacy cards keep user content while gaining the source layout", () => {
   });
   assert.equal(c.name, "Existing card");
   assert.equal(c.effect, "My rule");
-  assert.equal(c.fontSize, 34);
+  assert.equal(c.fontSize, 32.4);
   assert.equal(c.layoutVersion, 2);
   assert.equal(c.cardNumber, "1");
   assert.equal(c.deckSize, "40");
   assert.deepEqual(c.customSymbols, []);
+});
+test("source typography migrates defaults and preserves authored sizes and content", () => {
+  assert.equal(validateCard({ fontSize: 34, layoutVersion: 2 }).fontSize, 32.4);
+  assert.equal(validateCard({ fontSize: 29, layoutVersion: 2 }).fontSize, 29);
+  assert.equal(validateCard({ ...blankCard(), fontSize: 34 }).fontSize, 34);
+  const authored = {
+    ...blankCard(),
+    name: "TEST123",
+    effect: "My text [power]",
+    type: "Moon-elf",
+    fontSize: 30,
+  };
+  assert.deepEqual(validateCard(authored), authored);
 });
 test("every card starts with visible 1/40 numbering and imports old fractions", () => {
   assert.equal(cardNumberLabel(blankCard()), "1/40");

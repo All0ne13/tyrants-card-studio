@@ -36,7 +36,11 @@ npm test
 
 `scripts/check-browser.mjs` is a local browser-verification harness. Adjust its Chrome and Playwright locations to run it on another computer. Its screenshots and generated test files are excluded from Git.
 
-`scripts/check-card-fidelity.mjs` rebuilds the supplied Gremlin example from editable fields and checks cursor insertion, formatting, custom-symbol persistence, exports and responsive layouts. `scripts/prepare-card-components.py` documents how the frame components and icons were recovered. Editable headings use the original bundled CardTitle typeface as complete text runs, including numbers and punctuation. The rules font supports Cyrillic.
+`scripts/check-card-fidelity.mjs` rebuilds the supplied Gremlin example from editable fields and checks cursor insertion, formatting, custom-symbol persistence, exports and responsive layouts. `scripts/prepare-card-components.py` documents how the frame components and icons were recovered.
+
+Card lettering uses the complete **Modesto** and **Scala Sans** fonts from the user-supplied BGG creation kit. Title, cost, type, aspect, victory points, rules and footer have separate styles. `src/card-typography.js` records the PSD font sizes, tracking and horizontal transforms, scaled to the 750 × 1040 print canvas; aspect and flavour widths are calibrated against the supplied Faerie reference. Card fonts do not replace website fonts. The source fonts contain Latin characters; Ukrainian text uses the existing Cyrillic fallback.
+
+`scripts/prepare-source-fonts.py <creation-kit-directory>` packages the supplied `Fonts` folder into WOFF2 without subsetting glyphs. Requires Python `fonttools` and `brotli`. The committed output is ready to deploy; the build does not require the source kit or Python. `dist/assets/card-fonts/source-fonts.json` records the original PostScript names, character coverage and source hashes. Preview and print exports wait for all original faces to load; a failed font request stops export instead of silently producing a substitute typeface.
 
 `scripts/check-editable-card.mjs` checks all direct-editing regions, the deck-mark picker, default and custom numbering, validation, persistence, the short Lost Huntman layout and its print exports.
 

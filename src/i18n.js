@@ -1,5 +1,9 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  [
+    "Не вдалося завантажити оригінальний шрифт карти. Оновіть сторінку перед експортом.",
+    "The original card font could not be loaded. Reload the page before exporting.",
+  ],
   ["НАЗВА КОЛОДИ", "DECK TITLE"],
   ["Змінити ілюстрацію", "Change artwork"],
   ["Вибрати значок аспекту", "Choose aspect icon"],
