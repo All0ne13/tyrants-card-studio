@@ -1,0 +1,27 @@
+{
+  "source": "User-supplied Faerie deck / Faerie 2.0.pdf",
+  "page": 2,
+  "extraction": "Embedded lossless PNG, not a screenshot or scan enhancement",
+  "sourcePixels": [
+    822,
+    1122
+  ],
+  "sourceSHA256": "3929320e3b52623754b9fa6025d8aceae7f09a758bba98eac39c5b6bc42febab",
+  "printPixels": [
+    750,
+    1040
+  ],
+  "cropBox": [
+    36,
+    41,
+    786,
+    1081
+  ],
+  "resampled": false,
+  "pdfCardMillimetres": [
+    63.5,
+    88
+  ],
+  "bggReference": "https://boardgamegeek.com/filepage/207673/fan-deck-creation-kit-card-template-plus-fonts",
+  "bggNote": "Reference kit only; the deployed image was extracted from the supplied PDF, not downloaded from BGG."
+}

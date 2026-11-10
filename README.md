@@ -11,7 +11,7 @@ A browser-based card constructor and fan-material library for **Tyrants of the U
 - Card numbering is visible by default as **1/40**, with separate editable card-number and deck-size fields. Existing blank numbers and legacy fractions migrate automatically; invalid numbering blocks print export.
 - Short (Lost Huntman), standard (Gremlin) and larger rules-area layouts preserve the print size and type sizes while changing the artwork/rules split.
 - Inline Influence/Power symbols, aspect icons, Unicode characters and uploaded custom symbols. Insert at the cursor; apply bold or italic to selected text. Saved tokens such as `[influence]` render as icons in preview and print exports.
-- Original Minion back, editable purple-pattern back or uploaded back image.
+- Native **MINION** PNG back by default, editable purple-pattern back or uploaded back image. Existing custom backs stay intact.
 - Automatic local IndexedDB saves; JSON import/export for moving projects between devices.
 - Exact **63.5 × 88 mm PDF**, PNG with physical-size metadata, ZIP of individual images, and A4 sheets with crop marks and mirrored back positions for long-edge duplex printing.
 - Library of the supplied fan decks, backs, player mats, modular boards and original rules. Incomplete or conflicting sources are identified rather than silently altered.
@@ -40,6 +40,8 @@ npm test
 
 `scripts/check-editable-card.mjs` checks all direct-editing regions, the deck-mark picker, default and custom numbering, validation, persistence, the short Lost Huntman layout and its print exports.
 
+`scripts/check-minion-back.mjs` checks native-back rendering, source downloads, PNG/PDF exports, legacy-draft migration, preservation of custom backs, and layouts at 1440, 768, 390 and 320 pixels. Set `TEST_URL` to check a deployment instead of localhost.
+
 ## Printing
 
 Use **Actual size / 100%**, not Fit to page. A4 sheets hold up to nine cards. For double-sided sheets use **flip on long edge**. Print one test sheet first: printer registration and printable margins vary. The PDF page/placement dimensions are authoritative; PNG programs may ignore embedded physical-size metadata.
@@ -51,5 +53,9 @@ Source PDFs retain their original page sizes and are available separately from t
 ## Library preparation
 
 `scripts/prepare-library.py` documents the one-time import from the supplied local collection, using PyMuPDF and Pillow. It creates web previews and optimized printable source files without modifying the originals. Source paths are configurable in that script.
+
+The sharp MINION back is extracted **directly from the embedded PNG on page 2 of the user-supplied `Faerie deck/Faerie 2.0.pdf`**, not reconstructed from a scan. `scripts/prepare-minion-back.py [source.pdf]` reproduces the extraction. The full 822 × 1122 image is preserved byte-for-byte as `dist/assets/minion-back-source.png`; `minion-back-print.png` is a lossless 750 × 1040 crop for the editor, with no resizing. The crop removes bleed and five additional pixels of black trim at the top and bottom to fit the requested aspect ratio. Source metadata and hash are in `minion-back-source.json`. Both PNGs can be downloaded in the Back tab.
+
+The [BGG fan-deck creation kit](https://boardgamegeek.com/filepage/207673/fan-deck-creation-kit-card-template-plus-fonts) lists a `back.png` reference. BGG's download was inaccessible during this update; the bundled back comes from the supplied PDF, not from that download. No claim is made that this fan-created asset is an official publisher source.
 
 This is an unofficial fan tool. Game and fan-expansion artwork belongs to its respective creators. Font licenses are included alongside the bundled fonts.

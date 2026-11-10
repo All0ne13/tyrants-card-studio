@@ -42,7 +42,8 @@ export function blankCard() {
     backTitle: "",
     backSubtitle: "",
     backImage: "",
-    backMode: "pattern",
+    backMode: "original",
+    backSourceVersion: 1,
   };
 }
 export function validateCard(input) {
@@ -63,6 +64,19 @@ export function validateCard(input) {
   card.artY = Math.max(-100, Math.min(100, card.artY));
   if (!input.layoutVersion && card.fontSize === 24) card.fontSize = 34;
   card.layoutVersion = 2;
+  // Replace only the untouched generated back from earlier projects.
+  // Deliberately selected patterns and authored/uploaded backs stay intact.
+  if (
+    !input.backSourceVersion &&
+    input.backMode === "pattern" &&
+    !card.backTitle &&
+    !card.backSubtitle &&
+    !card.backImage
+  )
+    card.backMode = "original";
+  if (!["original", "pattern", "image"].includes(card.backMode))
+    card.backMode = "original";
+  card.backSourceVersion = 1;
   if (input.deckIcon && input.deckMark === "faerie" && !input.deckPickerVersion)
     card.deckMark = "custom";
   card.deckPickerVersion = 1;

@@ -84,19 +84,17 @@ export async function renderCard(
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
+  if (back && card.backMode === "original") {
+    // The native back already contains its finished border. Drawing it 1:1
+    // without another corner mask preserves every source pixel in print.
+    ctx.drawImage(await getImage("assets/minion-back-print.png"), 0, 0);
+    return { canvas: c, overflow: false };
+  }
   ctx.save();
   round(ctx, 0, 0, W, H, 52);
   ctx.clip();
   if (back) {
-    if (card.backMode === "original")
-      ctx.drawImage(
-        await getImage("assets/original-card-back.webp"),
-        0,
-        0,
-        W,
-        H,
-      );
-    else if (card.backMode === "image" && card.backImage)
+    if (card.backMode === "image" && card.backImage)
       drawCover(
         ctx,
         await getImage(card.backImage),

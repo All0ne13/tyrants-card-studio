@@ -24,6 +24,29 @@ test("new card starts with empty editable content", () => {
   assert.equal(CARD_MM.width, 63.5);
   assert.equal(CARD_MM.height, 88);
 });
+
+test("native MINION is the default and replaces only untouched legacy backs", () => {
+  assert.equal(blankCard().backMode, "original");
+  assert.equal(validateCard({ backMode: "pattern" }).backMode, "original");
+  assert.equal(validateCard({ backMode: "original" }).backMode, "original");
+  for (const content of [
+    { backTitle: "My deck" },
+    { backSubtitle: "Fan edition" },
+  ])
+    assert.equal(
+      validateCard({ backMode: "pattern", ...content }).backMode,
+      "pattern",
+    );
+  assert.equal(
+    validateCard({ backMode: "pattern", backSourceVersion: 1 }).backMode,
+    "pattern",
+  );
+  const data = "data:image/png;base64,AA==";
+  const custom = validateCard({ backMode: "image", backImage: data });
+  assert.equal(custom.backMode, "image");
+  assert.equal(custom.backImage, data);
+  assert.equal(validateCard({ backMode: "unknown" }).backMode, "original");
+});
 test("A4 contains nine non-overlapping cards and trim marks stay on the page", () => {
   const p = sheetPositions();
   assert.equal(p.length, 9);
