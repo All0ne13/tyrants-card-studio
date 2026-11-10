@@ -44,6 +44,8 @@ npm test
 
 `scripts/check-card-corners.mjs` checks that rounded front-card and custom-back corners remain transparent in the preview and exported PNG, including after switching sides, at desktop, tablet and phone widths. The native MINION image keeps its original border unchanged.
 
+`scripts/check-card-typography.mjs` reproduces a custom MoonElf card, checks font loading after refresh, preserves saved fields across language changes, exports PNG and checks desktop/tablet/phone previews. Source lettering uses consistent field baselines and capital/small-cap heights, including letters recovered from other source fields; punctuation keeps its own proportions.
+
 ## Printing
 
 Use **Actual size / 100%**, not Fit to page. A4 sheets hold up to nine cards. For double-sided sheets use **flip on long edge**. Print one test sheet first: printer registration and printable margins vary. The PDF page/placement dimensions are authoritative; PNG programs may ignore embedded physical-size metadata.

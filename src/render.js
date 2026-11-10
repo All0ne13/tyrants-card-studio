@@ -72,6 +72,7 @@ export async function renderCard(
   { back = false, preview = false, canvas = null } = {},
 ) {
   await Promise.all([
+    document.fonts.load("400 25px Manrope"),
     document.fonts.load("700 44px CardTitle"),
     document.fonts.load("400 34px CardRules"),
     document.fonts.load("700 34px CardRules"),
@@ -112,7 +113,7 @@ export async function renderCard(
       ctx.stroke();
       ctx.textAlign = "center";
       ctx.fillStyle = "#fff";
-      const title = card.backTitle || (preview ? "НАЗВА КОЛОДИ" : "");
+      const title = card.backTitle || (preview ? t("НАЗВА КОЛОДИ") : "");
       ctx.font = `700 ${fitText(ctx, title, W - 140, 66)}px CardTitle,Georgia,serif`;
       ctx.fillText(title, W / 2, H / 2 + 10);
       ctx.font = "400 23px CardRules,Arial,sans-serif";
@@ -250,7 +251,7 @@ export async function renderCard(
   const overflow = bottom > 920;
   ctx.restore();
   if (preview && !card.effect && !card.flavour) {
-    ctx.font = "400 25px CardRules,Arial,sans-serif";
+    ctx.font = "400 25px Manrope,Arial,sans-serif";
     ctx.fillStyle = "#aaa1a9";
     ctx.fillText(t("Ефект карти та художній текст"), 67, whiteTop + 44);
   }

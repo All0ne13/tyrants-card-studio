@@ -1,5 +1,6 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["НАЗВА КОЛОДИ", "DECK TITLE"],
   ["Змінити ілюстрацію", "Change artwork"],
   ["Вибрати значок аспекту", "Choose aspect icon"],
   ["Текст ефекту та символи", "Effect text and symbols"],
