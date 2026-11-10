@@ -82,8 +82,6 @@ export async function renderCard(
   c.height = H;
   const ctx = c.getContext("2d");
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, W, H);
   if (back && card.backMode === "original") {
     // The native back already contains its finished border. Drawing it 1:1
     // without another corner mask preserves every source pixel in print.
@@ -93,6 +91,10 @@ export async function renderCard(
   ctx.save();
   round(ctx, 0, 0, W, H, 52);
   ctx.clip();
+  // Keep the area outside the rounded card transparent in preview and exports.
+  // Filling before the clip leaves black rectangular corners behind the frame.
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
   if (back) {
     if (card.backMode === "image" && card.backImage)
       drawCover(

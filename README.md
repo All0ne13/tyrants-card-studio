@@ -42,6 +42,8 @@ npm test
 
 `scripts/check-minion-back.mjs` checks native-back rendering, source downloads, PNG/PDF exports, legacy-draft migration, preservation of custom backs, and layouts at 1440, 768, 390 and 320 pixels. Set `TEST_URL` to check a deployment instead of localhost.
 
+`scripts/check-card-corners.mjs` checks that rounded front-card and custom-back corners remain transparent in the preview and exported PNG, including after switching sides, at desktop, tablet and phone widths. The native MINION image keeps its original border unchanged.
+
 ## Printing
 
 Use **Actual size / 100%**, not Fit to page. A4 sheets hold up to nine cards. For double-sided sheets use **flip on long edge**. Print one test sheet first: printer registration and printable margins vary. The PDF page/placement dimensions are authoritative; PNG programs may ignore embedded physical-size metadata.
