@@ -19,6 +19,14 @@ try {
   });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  await page.addInitScript(() => {
+    window.cardTextCalls = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      window.cardTextCalls.push({ text, font: this.font });
+      return original.call(this, text, ...args);
+    };
+  });
   await page.goto(base);
   await page.locator("#locale-switch").waitFor();
   const art = await page.evaluate(async () => {
@@ -88,12 +96,27 @@ try {
     );
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('[data-key="name"]').fill("Web of Shadows");
+  await page.locator('[data-key="name"]').fill("TEST123");
+  await page.locator('[data-key="type"]').fill("Moon-elf");
+  await page.locator('[data-key="cost"]').fill("3");
+  await page.locator('[data-key="deckVP"]').fill("3");
+  await page.locator('[data-key="innerVP"]').fill("3");
   await page.locator('[data-key="aspectText"]').fill("Obedience");
   await page
     .locator('[data-key="effect"]')
     .fill("Return another player’s troop or spy. [influence]");
   await page.waitForTimeout(500);
+  const calls = await page.evaluate(() => window.cardTextCalls);
+  assert.ok(
+    calls.some(
+      (c) => c.text === "TEST123" && c.font.includes("44px CardTitle"),
+    ),
+  );
+  assert.ok(
+    calls.some(
+      (c) => c.text === "Moon-elf" && c.font.includes("27px CardTitle"),
+    ),
+  );
   await page
     .locator("#preview")
     .screenshot({ path: out + "/custom-title.png" });
@@ -102,23 +125,39 @@ try {
   await (await dl).saveAs(out + "/custom-card.png");
   await page.reload();
   await page.locator('[data-card-edit="name"]').waitFor();
-  assert.equal(
-    await page.locator('[data-key="name"]').inputValue(),
-    "Web of Shadows",
-  );
+  assert.equal(await page.locator('[data-key="name"]').inputValue(), "TEST123");
   const fonts = await page.evaluate(() => ({
     title: document.fonts.check("700 44px CardTitle"),
     body: document.fonts.check("400 34px CardRules"),
     interface: document.fonts.check("400 25px Manrope"),
   }));
   assert.ok(Object.values(fonts).every(Boolean));
+  const figures = await page.evaluate(() => {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = "700 44px CardTitle";
+    const letters = ctx.measureText("TEST"),
+      digits = ctx.measureText("123");
+    return {
+      letters: letters.actualBoundingBoxAscent,
+      digits: digits.actualBoundingBoxAscent,
+      descent: digits.actualBoundingBoxDescent,
+    };
+  });
+  assert.ok(
+    figures.digits >= figures.letters * 0.85,
+    "Digits must align with the capitals in TEST123",
+  );
+  assert.ok(
+    figures.descent <= 2,
+    "Lining digits must not descend below the title baseline",
+  );
   await page.locator("#locale-switch").selectOption("uk");
   await page.waitForFunction(() => document.documentElement.lang === "uk");
+  assert.equal(await page.locator('[data-key="name"]').inputValue(), "TEST123");
   assert.equal(
-    await page.locator('[data-key="name"]').inputValue(),
-    "Web of Shadows",
+    await page.locator('[data-key="type"]').inputValue(),
+    "Moon-elf",
   );
-  assert.equal(await page.locator('[data-key="type"]').inputValue(), "MoonElf");
   assert.deepEqual(errors, []);
   writeFileSync(
     out + "/result.json",

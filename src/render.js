@@ -123,8 +123,7 @@ export async function renderCard(
     ctx.restore();
     return { canvas: c, overflow: false };
   }
-  const [atlas, art, aspect, deck, ring] = await Promise.all([
-    getImage("assets/card-parts/glyphs.png"),
+  const [art, aspect, deck, ring] = await Promise.all([
     getImage(card.art),
     getImage(card.icon || SYMBOLS[card.aspect]?.image),
     getImage(
@@ -162,25 +161,25 @@ export async function renderCard(
   }
   ctx.fillStyle = "#fff";
   ctx.textAlign = "left";
-  sourceLettering(ctx, atlas, card.name || (preview ? t("Назва карти") : ""), {
+  sourceLettering(ctx, null, card.name || (preview ? t("Назва карти") : ""), {
     x: 47,
     y: 98,
     maxWidth: 565,
   });
-  sourceLettering(ctx, atlas, card.cost, {
+  sourceLettering(ctx, null, card.cost, {
     x: 704,
     y: 98,
     kind: "number",
     align: "right",
     maxWidth: 110,
   });
-  sourceLettering(ctx, atlas, card.aspectText || (preview ? t("АСПЕКТ") : ""), {
+  sourceLettering(ctx, null, card.aspectText || (preview ? t("АСПЕКТ") : ""), {
     x: 132,
     y: 151,
     kind: "meta",
     maxWidth: 360,
   });
-  sourceLettering(ctx, atlas, card.type || (preview ? t("ТИП") : ""), {
+  sourceLettering(ctx, null, card.type || (preview ? t("ТИП") : ""), {
     x: 704,
     y: 151,
     kind: "race",
@@ -251,7 +250,7 @@ export async function renderCard(
   const overflow = bottom > 920;
   ctx.restore();
   if (preview && !card.effect && !card.flavour) {
-    ctx.font = "400 25px Manrope,Arial,sans-serif";
+    ctx.font = "400 25px CardRules,Arial,sans-serif";
     ctx.fillStyle = "#aaa1a9";
     ctx.fillText(t("Ефект карти та художній текст"), 67, whiteTop + 44);
   }
@@ -264,12 +263,12 @@ export async function renderCard(
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.fillStyle = "#fff";
-    sourceLettering(ctx, atlas, card.deckVP, {
+    sourceLettering(ctx, null, card.deckVP, {
       x: 568,
       y: 963,
       kind: "number",
       align: "center",
-      scale: 1.05,
+      fontSize: 51,
       maxWidth: 43,
     });
   }
@@ -280,12 +279,12 @@ export async function renderCard(
     ctx.fill();
     ctx.drawImage(ring, 598, 889, 100, 101);
     ctx.fillStyle = "#fff";
-    sourceLettering(ctx, atlas, card.innerVP, {
+    sourceLettering(ctx, null, card.innerVP, {
       x: 647,
       y: 962,
       kind: "number",
       align: "center",
-      scale: 1.07,
+      fontSize: 48,
       maxWidth: 66,
     });
   }
