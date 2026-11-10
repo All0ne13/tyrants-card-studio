@@ -28,17 +28,20 @@ try {
   await page.locator('[data-key="name"]').fill("Назва");
   await page.locator('[data-key="effect"]').fill("Власний текст [influence]");
   await page.locator("#locale-switch").selectOption("uk");
+  await page.waitForFunction(() => document.documentElement.lang === "uk");
   assert.equal(await page.locator('[data-key="name"]').inputValue(), "Назва");
   assert.match(await page.locator(".brand").innerText(), /Конструктор карт/);
   await page.reload();
+  await page.locator("#locale-switch").waitFor();
   assert.equal(await page.locator("html").getAttribute("lang"), "uk");
   await page.locator("#locale-switch").selectOption("en");
+  await page.waitForFunction(() => document.documentElement.lang === "en");
   assert.equal(
     await page.locator('[data-key="effect"]').inputValue(),
     "Власний текст [influence]",
   );
   await page.locator('[data-tab="back"]').click();
-  assert.equal(await page.locator(".settings-panel .info-note").count(), 0);
+  assert.equal(await page.locator(".panel-content .info-note").count(), 0);
   await page.goto(base + "#library");
   await page.locator(".pack-tile").first().waitFor();
   const manifest = await (await page.request.get(base + "library.json")).json();
@@ -49,6 +52,7 @@ try {
   assert.match(await page.locator(".back-grid").innerText(), /Cohort/);
   await page.locator(".asset-tile").first().click();
   await page.locator("dialog[open]").waitFor();
+  await page.locator("dialog .asset-large img").evaluate((n) => n.decode());
   assert.equal(
     await page
       .locator("dialog .asset-large img")
