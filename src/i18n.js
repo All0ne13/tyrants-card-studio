@@ -1,0 +1,408 @@
+// UI translations only. User-authored card text and original rules are never translated.
+const messages = new Map([
+  ["Змінити ілюстрацію", "Change artwork"],
+  ["Вибрати значок аспекту", "Choose aspect icon"],
+  ["Текст ефекту та символи", "Effect text and symbols"],
+  ["Вибрати знак колоди", "Choose deck symbol"],
+  ["Номер карти / карт у колоді", "Card number / deck size"],
+  ["Авторський підпис", "Credit line"],
+  ["Очки внутрішнього кола", "Inner-circle points"],
+  ["МОЇ ПРОЄКТИ", "MY PROJECTS"],
+  ["63,5 × 88 мм", "63.5 × 88 mm"],
+  ["ДОДАЙТЕ ІЛЮСТРАЦІЮ", "ADD ARTWORK"],
+  ["Ефект карти та художній текст", "Card effect and flavour text"],
+  ["Конструктор карт", "Card Builder"],
+  ["КОНСТРУКТОР КАРТ", "CARD BUILDER"],
+  ["Тирани Підземелля", "Tyrants of the Underdark"],
+  ["Основна навігація", "Main navigation"],
+  ["Конструктор", "Editor"],
+  ["Бібліотека", "Library"],
+  ["Мої карти", "My cards"],
+  ["Імпорт", "Import"],
+  ["Мова інтерфейсу", "Interface language"],
+  ["Збережено на пристрої", "Saved on this device"],
+  ["Збереження…", "Saving…"],
+  ["Не збережено", "Not saved"],
+  [
+    "Не вдалося зберегти в браузері. Експортуйте проєкт у JSON.",
+    "Could not save in this browser. Export your project as JSON.",
+  ],
+  [
+    "Знак та номер карти · зліва внизу",
+    "Deck symbol and card number · bottom left",
+  ],
+  ["Вибір знака колоди", "Choose a deck symbol"],
+  ["Власний знак колоди", "Custom deck symbol"],
+  ["Мій знак", "My symbol"],
+  ["Без знака колоди", "No deck symbol"],
+  ["Без знака", "None"],
+  ["Додати власний знак", "Upload a deck symbol"],
+  ["Номер карти", "Card number"],
+  ["Карт у колоді", "Cards in deck"],
+  ["На карті:", "On the card:"],
+  ["Макет карти", "Card layout"],
+  ["Короткий ефект · як Lost Huntman", "Short effect · Lost Huntman layout"],
+  ["Стандартний · як Gremlin", "Standard · Gremlin layout"],
+  ["Великий блок правил", "Large rules area"],
+  [
+    "Натисніть текст або значок на карті, щоб змінити.",
+    "Click text or a symbol on the card to edit it.",
+  ],
+  ["Жирний текст", "Bold"],
+  ["Курсив", "Italic"],
+  ["Інші символи та власні значки", "More symbols and custom icons"],
+  ["Завантажити свій значок", "Upload an icon"],
+  ["Наприклад: ∞ ◆ ♥", "For example: ∞ ◆ ♥"],
+  ["Власні текстові символи", "Custom text symbols"],
+  ["Вставити", "Insert"],
+  ["01 / ТЕКСТ КАРТИ", "01 / CARD TEXT"],
+  ["Назва", "Title"],
+  ["Наприклад, High Priestess", "For example, High Priestess"],
+  ["Вартість", "Cost"],
+  ["Тип / раса", "Type / race"],
+  ["Назва аспекту", "Aspect name"],
+  ["Ефект карти", "Card effect"],
+  ["Напишіть дію та її умови…", "Write the action and its conditions…"],
+  ["Художній текст", "Flavour text"],
+  ["Цитата або коротка історія…", "A quote or short story…"],
+  [
+    "Кнопки вставляють символ у місце курсора. **Текст** — жирний, *текст* — курсив. Коди [influence] і [power] у прев’ю та файлах стають значками.",
+    "Insert symbols at the cursor. **Text** is bold; *text* is italic. [influence] and [power] become icons in the preview and exports.",
+  ],
+  ["Очки в колоді", "Deck VP"],
+  ["Внутрішнє коло", "Inner Circle VP"],
+  ["Кількість крапок", "Copy dots"],
+  ["Підпис праворуч унизу", "Bottom-right credit"],
+  ["Розмір тексту", "Text size"],
+  ["02 / ІЛЮСТРАЦІЯ", "02 / ARTWORK"],
+  ["Змінити зображення", "Change image"],
+  ["Додати ілюстрацію", "Upload artwork"],
+  ["PNG, JPG або WebP · до 15 МБ", "PNG, JPG or WebP · up to 15 MB"],
+  [
+    "Зображення заповнює вікно карти. Зсуньте та збільште його, щоб вибрати композицію.",
+    "Move and zoom the image to frame your artwork.",
+  ],
+  ["Масштаб", "Zoom"],
+  ["Горизонталь", "Horizontal position"],
+  ["Вертикаль", "Vertical position"],
+  ["Скинути кадрування", "Reset crop"],
+  ["Прибрати ілюстрацію", "Remove artwork"],
+  ["03 / АСПЕКТ І РАМКА", "03 / ASPECT AND FRAME"],
+  [
+    "Коло залишається частиною рамки. Виберіть символ або завантажте власну іконку.",
+    "Choose an aspect symbol or upload your own icon.",
+  ],
+  ["Власна іконка", "Upload an icon"],
+  ["Повернути стандартний символ", "Restore the default symbol"],
+  ["Фіолетова рамка", "Frame colour"],
+  ["Покора", "Obedience"],
+  ["Завоювання", "Conquest"],
+  ["Амбіція", "Ambition"],
+  ["Хитрість", "Guile"],
+  ["Злоба", "Malice"],
+  ["Без іконки", "No icon"],
+  ["Вплив", "Influence"],
+  ["Сила", "Power"],
+  ["Переможне очко", "Victory point"],
+  ["Стрілка умови", "Conditional arrow"],
+  ["Пункт списку", "Bullet point"],
+  ["Плюс", "Plus"],
+  ["Нескінченність", "Infinity"],
+  ["Дроу", "Drow"],
+  ["Дракони", "Dragons"],
+  ["Елементалі", "Elementals"],
+  ["Демони", "Demons"],
+  ["Найманці", "Mercenaries"],
+  ["Облога", "Siege"],
+  ["Слизи", "Ooze"],
+  ["Чарівники", "Wizards"],
+  ["04 / СОРОЧКА", "04 / CARD BACK"],
+  [
+    "Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.",
+    "Your card back is saved with the card and included in double-sided exports.",
+  ],
+  ["Вигляд сорочки", "Card back"],
+  ["Оригінальна MINION", "Original MINION"],
+  ["Власний візерунок і напис", "Custom pattern and title"],
+  ["Моє зображення", "My image"],
+  ["Назва колоди", "Deck title"],
+  ["Додатковий рядок", "Subtitle"],
+  ["Назва доповнення", "Expansion name"],
+  ["Завантажити сорочку", "Upload a card back"],
+  ["PNG, JPG або WebP", "PNG, JPG or WebP"],
+  ["Скачати PNG для друку", "Download print PNG"],
+  ["Оригінальне зображення", "Original image"],
+  ["Майстерня карт", "Card workshop"],
+  ["ВАШ ДІМ. ВАШІ КАРТИ.", "YOUR HOUSE. YOUR CARDS."],
+  [
+    "Ваші історії. Ваші правила. Справжня карта на виході.",
+    "Your stories. Your rules. Cards ready for your table.",
+  ],
+  ["Нова карта", "New card"],
+  ["Текст", "Text"],
+  ["Ілюстрація", "Artwork"],
+  ["Іконки", "Icons"],
+  ["Сорочка", "Card back"],
+  ["ЖИВЕ ПРЕВ’Ю", "LIVE PREVIEW"],
+  ["Прев’ю карти", "Card preview"],
+  ["63,5 ММ", "63.5 MM"],
+  ["88 ММ", "88 MM"],
+  ["Лицьова сторона", "Front"],
+  [
+    "Текст не вміщується. Зменште шрифт або скоротіть текст.",
+    "Text does not fit. Reduce the font size or shorten the text.",
+  ],
+  ["ГОТОВО ДО ДРУКУ", "READY TO PRINT"],
+  ["З паперу —", "From paper"],
+  ["у Підзем’я.", "to the Underdark."],
+  [
+    "Друкований PDF із точним розміром карти. Без скриншотів і ручного масштабування.",
+    "Export your cards as a correctly sized PDF, ready to print.",
+  ],
+  ["Розмір", "Size"],
+  ["Зображення", "Image"],
+  ["Ваша колода", "Your deck"],
+  ["карта", "card"],
+  ["карт", "cards"],
+  ["Експортувати", "Export"],
+  ["Поточну карту", "Current card"],
+  ["Усі мої карти", "All my cards"],
+  ["Додати сорочки", "Include card backs"],
+  ["Зберегти PDF", "Save PDF"],
+  ["Аркуш A4 · до 9 карт", "A4 sheet · up to 9 cards"],
+  ["Проєкт JSON", "Project JSON"],
+  ["Друкуйте в масштабі 100%.", "Print at actual size / 100%."],
+  [
+    "Вимкніть «Підігнати до сторінки». Для A4 із сорочками — переворот уздовж довгого краю. Спочатку перевірте один аркуш.",
+    "Disable Fit to page. For double-sided A4, flip on the long edge. Test one sheet first.",
+  ],
+  ["Копія", "Duplicate"],
+  ["Видалити карту", "Delete card"],
+  ["Без назви", "Untitled"],
+  [
+    "Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.",
+    "Saved in this browser. Export a project to move your cards to another device.",
+  ],
+  ["Створити карту", "Create a card"],
+  ["Власна карта", "Custom card"],
+  ["Редагувати", "Edit"],
+  ["Створено копію карти.", "Card duplicated."],
+  [
+    "Спочатку виділіть текст, який потрібно форматувати.",
+    "Select the text you want to format first.",
+  ],
+  [
+    "Видалити поточну карту? Експортуйте проєкт, якщо хочете залишити копію.",
+    "Delete this card? Export the project first if you want to keep a copy.",
+  ],
+  ["Готуємо файл…", "Preparing file…"],
+  [
+    "Файл готовий. Для друку PDF оберіть масштаб 100%.",
+    "File ready. Print the PDF at actual size / 100%.",
+  ],
+  [
+    "Оберіть PNG, JPG або WebP до 15 МБ.",
+    "Choose a PNG, JPG or WebP file up to 15 MB.",
+  ],
+  [
+    "Оберіть PNG, JPG або WebP до 5 МБ.",
+    "Choose a PNG, JPG or WebP file up to 5 MB.",
+  ],
+  [
+    "У полі недостатньо місця для цього фрагмента.",
+    "There is not enough room in this field.",
+  ],
+  [
+    "На одну карту можна додати до 24 власних значків.",
+    "You can add up to 24 custom icons per card.",
+  ],
+  ["Файл завеликий. Максимум 60 МБ.", "File too large. The limit is 60 MB."],
+  [
+    "Це не проєкт Tyrants Card Studio або в ньому понад 100 карт.",
+    "This is not a Tyrants Card Studio project, or it contains more than 100 cards.",
+  ],
+  ["Не вдалося імпортувати проєкт.", "Could not import the project."],
+  [
+    "Бібліотека недоступна. Редактор працює незалежно.",
+    "The library is unavailable. You can still use the editor.",
+  ],
+  ["Не вдалося прочитати зображення.", "Could not read the image."],
+  ["Неправильний формат карти.", "Invalid card format."],
+  [
+    "Зображення має бути вбудованим PNG, JPEG або WebP.",
+    "Images must be embedded PNG, JPEG or WebP files.",
+  ],
+  ["Неправильний формат власного символу.", "Invalid custom icon format."],
+  [
+    "Номер карти та кількість карт мають бути цілими числами від 1 до 9999.",
+    "Card number and deck size must be whole numbers from 1 to 9999.",
+  ],
+  [
+    "Номер карти не може перевищувати кількість карт у колоді.",
+    "The card number cannot exceed the deck size.",
+  ],
+  [
+    "Текст не вміщується. Скоротіть його або зменште шрифт перед експортом.",
+    "Text does not fit. Shorten it or reduce the font size before exporting.",
+  ],
+  ["Не вдалося створити PNG.", "Could not create the PNG."],
+  ["ДОДАЙТЕ ІЛЮСТРАЦІЮ", "ADD ARTWORK"],
+  ["Назва карти", "Card title"],
+  ["АСПЕКТ", "ASPECT"],
+  ["ТИП", "TYPE"],
+  ["Ефект карти та художній текст", "Card effect and flavour text"],
+  ["Неофіційний фанатський конструктор", "Unofficial fan card builder"],
+  ["Підтримати проєкт", "Support the project"],
+  ["Усі матеріали", "All resources"],
+  ["Колоди", "Decks"],
+  ["Сорочки", "Card backs"],
+  ["Планшети", "Player boards"],
+  ["Поля", "Maps & tokens"],
+  ["Правила", "Rules"],
+  ["БІБЛІОТЕКА", "THE LIBRARY"],
+  ["Усе для", "Everything for"],
+  ["вашого столу.", "your table."],
+  [
+    "Карти, доповнення та правила — кожне на своєму місці.",
+    "Cards, expansions and rules. Everything in its place.",
+  ],
+  ["Знайти колоду, карту або правила…", "Search decks, cards or rules…"],
+  ["Пошук у бібліотеці", "Search the library"],
+  [
+    "Нічого не знайдено. Спробуйте іншу назву.",
+    "No matches. Try another name.",
+  ],
+  ["Нічого не знайдено.", "No matches found."],
+  ["Уся бібліотека", "Back to the library"],
+  ["ФАНАТСЬКЕ ДОПОВНЕННЯ", "FAN EXPANSION"],
+  ["КОЛОДА", "DECK"],
+  ["ПЛАНШЕТИ", "PLAYER BOARDS"],
+  ["ПОЛЕ / ЖЕТОНИ", "MAPS / TOKENS"],
+  ["ПРАВИЛА", "RULES"],
+  ["Карта ринку", "Market card"],
+  ["Скарб", "Treasure"],
+  ["Сталкер", "Stalker"],
+  ["Додаткова карта", "Extra card"],
+  ["Дракон", "Dragon"],
+  ["Планшет", "Player board"],
+  ["Поле", "Map"],
+  ["Жетони", "Tokens"],
+  ["Аркуш карт", "Card sheet"],
+  ["Аркуш сорочок", "Card-back sheet"],
+  ["Оновлення", "Update"],
+  ["Компонент", "Component"],
+  ["Друковані файли", "Print files"],
+  ["Карти", "Cards"],
+  ["Аркуші для друку", "Print sheets"],
+  ["Читати правила", "Read rules"],
+  ["Правила та пам’ятки", "Rules and references"],
+  ["Зберегти зображення", "Save image"],
+  ["Відкрити оригінал", "Open original"],
+  ["Використати як сорочку", "Use this card back"],
+  ["Закрити", "Close"],
+  ["Феї", "Faerie"],
+  ["Джезред Чаульссін", "Shadow dragon half-deck"],
+  ["Компанія шукачів", "Minions, treasures and stalkers"],
+  ["Когорти", "Starting-deck mini-expansion"],
+  ["Свірфнебліни та куо-тоа", "Svirfneblin and Kuo-Toa update cards"],
+  ["Місця сили", "Alternative site-control tokens"],
+  ["Модульне поле", "Modular map"],
+  ["Планшети домів", "House player boards"],
+  ["Правила базової гри", "Base game rules"],
+  [
+    "У джерелі є аркуші оновлення V1.0 → V1.1, а не повні базові колоди.",
+    "This set contains the supplied v1.0 to v1.1 update sheets. The complete base half-decks are not included.",
+  ],
+  [
+    "Містить основні карти, скарби й сталкерів. Кількість копій у вихідних файлах і правилах відрізняється — каталог зберігає надані матеріали.",
+    "Includes minions, treasures and stalkers. The supplied card files and rules list different copy counts; the original materials are preserved.",
+  ],
+  [
+    "Матеріали залишаються мовою оригіналу. Авторство належить їхнім творцям.",
+    "Resources remain in their original language. All artwork and rules belong to their creators.",
+  ],
+  ["Правила та інструкції", "Rules and guides"],
+  ["Базова гра", "Base game"],
+  ["Мова джерела: англійська", "Source language: English"],
+  ["Зміст", "Contents"],
+  ["До матеріалів колоди", "View this expansion"],
+  ["Джерело", "Source"],
+  ["Завантажити оригінал", "Download original"],
+  ["Відкрити PDF", "Open PDF"],
+  ["Попередня сторінка", "Previous page"],
+  ["Наступна сторінка", "Next page"],
+  ["Сторінка", "Page"],
+  ["Правила не знайдено.", "Rules not found."],
+  ["Відкрити на весь екран", "Open full size"],
+  [
+    "Оригінальний документ відкриється в новій вкладці.",
+    "The original document opens in a new tab.",
+  ],
+  [
+    "Мої карти зберігаються на цьому пристрої.",
+    "Your cards are saved on this device.",
+  ],
+  ["наборів", "sets"],
+  ["документів", "documents"],
+  ["дизайнів", "designs"],
+  ["сторінок", "pages"],
+  ["файлів", "files"],
+  ["стор.", "pages"],
+  ["коп.", "copies"],
+  ["МБ", "MB"],
+]);
+
+export let locale = "en";
+try {
+  if (globalThis.localStorage?.getItem("tyrants-studio-locale") === "uk")
+    locale = "uk";
+} catch {}
+export function setLocale(value) {
+  locale = value === "uk" ? "uk" : "en";
+  try {
+    globalThis.localStorage?.setItem("tyrants-studio-locale", locale);
+  } catch {}
+}
+export function t(source) {
+  if (typeof source !== "string" || locale === "uk") return source;
+  const match = /^(\s*)([\s\S]*?)(\s*)$/.exec(source);
+  const text = match[2];
+  let result = messages.get(text);
+  if (!result) {
+    for (const [uk, en] of [
+      ["Редагувати: ", "Edit: "],
+      ["Знак колоди: ", "Deck symbol: "],
+      ["Форматування: ", "Formatting: "],
+    ])
+      if (text.startsWith(uk)) result = en + t(text.slice(uk.length));
+    if (/^Імпортовано карт: \d+\.$/.test(text))
+      result = text.replace(/^Імпортовано карт: /, "Cards imported: ");
+    if (!result)
+      result = text.replace(
+        /(\d+) (дизайнів|сторінок|файлів|наборів|карт|карта)(?!\p{L})/gu,
+        (_, n, unit) => n + " " + (messages.get(unit) || unit),
+      );
+  }
+  return match[1] + (result || text) + match[3];
+}
+
+export function localizeUI(root) {
+  if (!root) return;
+  const protectedContent = (node) =>
+    node.parentElement?.closest(
+      "[data-user-content],[data-source-text],textarea,script,style",
+    );
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode())
+    if (!protectedContent(walker.currentNode))
+      walker.currentNode.textContent = t(walker.currentNode.textContent);
+  for (const node of [
+    root,
+    ...root.querySelectorAll("[title],[aria-label],[placeholder]"),
+  ]) {
+    if (node.closest?.("[data-user-content],[data-source-text]")) continue;
+    for (const attr of ["title", "aria-label", "placeholder"])
+      if (node.hasAttribute?.(attr))
+        node.setAttribute(attr, t(node.getAttribute(attr)));
+  }
+}

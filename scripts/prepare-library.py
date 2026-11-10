@@ -73,5 +73,6 @@ for pack_id,(title,uk,folder,category) in PACKS.items():
 (APP/'dist/library.json').write_text(json.dumps(manifest,ensure_ascii=False),encoding='utf8')
 from runpy import run_path
 run_path(str(APP/'scripts/prepare-minion-back.py'))['prepare'](SOURCE/'Faerie deck/Faerie 2.0.pdf')
+run_path(str(APP/'scripts/curate-library.py'))['curate']()
 for name in ['manrope-latin.woff2','manrope-cyrillic.woff2','Manrope-LICENSE.txt']:shutil.copy2(ROOT/'tyrants-underdark/dist/assets'/name,OUT/name)
 print('Library prepared:',sum(len(p['cards']) for p in manifest),'cards,',sum(len(p['pages']) for p in manifest),'sheets/pages',flush=True)

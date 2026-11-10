@@ -10,6 +10,13 @@ import { DECK_MARKS } from "./deck-marks.js";
 import { renderCard, getImage } from "./render.js";
 import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
+import { locale, setLocale, t, localizeUI } from "./i18n.js";
+import { supportURL } from "./library.js";
+import {
+  libraryView as renderLibrary,
+  libraryResults,
+  rulesView,
+} from "./library-view.js";
 const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const e = (v) =>
@@ -36,6 +43,8 @@ const icons = {
     '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/>',
   trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
   print: '<path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6z"/>',
+  heart:
+    '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   rotate:
     '<path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/>',
 };
@@ -48,12 +57,14 @@ let state = { cards: [blankCard()], active: 0 },
   filter = "all",
   search = "",
   packId = null,
+  rulePage = 0,
+  siteConfig = {},
   drawVersion = 0,
   timer;
 let db;
 function toast(text, bad = false) {
   const n = $("#toast");
-  n.textContent = text;
+  n.textContent = t(text);
   n.className = "show" + (bad ? " error" : "");
   clearTimeout(n.timer);
   n.timer = setTimeout(() => (n.className = ""), 4500);
@@ -79,14 +90,15 @@ async function persist() {
       t.onerror = () => reject(t.error);
     });
     if ($("#saved"))
-      $("#saved").innerHTML = icon("check", 13) + " Збережено на пристрої";
+      $("#saved").innerHTML =
+        icon("check", 13) + " " + t("Збережено на пристрої");
   } catch {
-    if ($("#saved")) $("#saved").textContent = "Не збережено";
+    if ($("#saved")) $("#saved").textContent = t("Не збережено");
     toast("Не вдалося зберегти в браузері. Експортуйте проєкт у JSON.", true);
   }
 }
 function changed() {
-  if ($("#saved")) $("#saved").textContent = "Збереження…";
+  if ($("#saved")) $("#saved").textContent = t("Збереження…");
   clearTimeout(timer);
   timer = setTimeout(persist, 450);
   preview();
@@ -97,12 +109,12 @@ function updateNumberFeedback() {
     error = $("#card-number-error");
   if (summary) summary.textContent = cardNumberLabel(card());
   if (error) {
-    error.textContent = cardNumberError(card());
+    error.textContent = t(cardNumberError(card()));
     error.hidden = !error.textContent;
   }
 }
 function header(route) {
-  return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 25)}</span><span>UNDERDARK<span class="brand-sub">ATELIER / CARD STUDIO</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${route === "library" ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button></header>`;
+  return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button></div></header>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
@@ -133,7 +145,7 @@ function richField(label, key, placeholder, max) {
   return `<div class="rich-field">${field(label, key, { area: true, placeholder, max })}<div class="text-tools" role="group" aria-label="Форматування: ${label}"><button class="symbol-button" data-format="**" data-target="${key}" aria-label="Жирний текст"><b>B</b></button><button class="symbol-button" data-format="*" data-target="${key}" aria-label="Курсив"><i>I</i></button>${["influence", "power", "arrow", "bullet", "plus"].map((s) => symbolButton(s, key)).join("")}</div><details class="more-symbols"><summary>Інші символи та власні значки</summary><div class="symbol-options">${["obedience", "malice", "ambition", "conquest", "guile", "vp", "infinity"].map((s) => symbolButton(s, key)).join("")}${card()
     .customSymbols.map(
       (s) =>
-        `<button class="symbol-button" data-insert-symbol="[icon:${s.id}]" data-target="${key}" aria-label="${e(s.name)}" title="${e(s.name)}"><img src="${e(s.data)}" alt=""></button>`,
+        `<button class="symbol-button" data-user-content data-insert-symbol="[icon:${s.id}]" data-target="${key}" aria-label="${e(s.name)}" title="${e(s.name)}"><img src="${e(s.data)}" alt=""></button>`,
     )
     .join(
       "",
@@ -166,10 +178,10 @@ function panel() {
       .join(
         "",
       )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}${footerSettings()}<label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
-  return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="original" ${card().backMode === "original" ? "selected" : ""}>MINION — вихідний PNG</option><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Власний візерунок і напис</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : `<div class="info-note"><strong>Справжній напис MINION та павутиння</strong><p>PNG із наданого Faerie 2.0.pdf. Збережено вихідні літери й візерунок, без збільшення та JPEG-стиснення. Для друку — 750 × 1040 px у форматі 63,5 × 88 мм.</p></div><p><a class="text-button" href="assets/minion-back-print.png" download="MINION-63.5x88mm.png">Скачати PNG для друку</a></p><p><a class="text-button" href="assets/minion-back-source.png" download="MINION-source-822x1122.png">Вихідний PNG із полями · 822 × 1122 px</a></p>`}`;
+  return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна MINION</option><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Власний візерунок і напис</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : `<p><a class="text-button" href="assets/minion-back-print.png" download="MINION-63.5x88mm.png">Скачати PNG для друку</a></p><p><a class="text-button" href="assets/minion-back-source.png" download="MINION-source-822x1122.png">Оригінальне зображення</a></p>`}`;
 }
 function editor() {
-  return `<div class="editor-intro"><div><div class="eyebrow">YOUR HOUSE. YOUR CREATION.</div><h1>Майстерня карт</h1><p>Ваші історії. Ваші правила. Справжня карта на виході.</p></div><button class="button ghost" id="new-card">${icon("plus")} Нова карта</button></div><div class="workspace"><aside class="editor-panel"><div class="panel-tabs" role="tablist">${[
+  return `<div class="editor-intro"><div><div class="eyebrow">ВАШ ДІМ. ВАШІ КАРТИ.</div><h1>Майстерня карт</h1><p>Ваші історії. Ваші правила. Справжня карта на виході.</p></div><button class="button ghost" id="new-card">${icon("plus")} Нова карта</button></div><div class="workspace"><aside class="editor-panel"><div class="panel-tabs" role="tablist">${[
     ["text", "Текст"],
     ["art", "Ілюстрація"],
     ["icons", "Іконки"],
@@ -206,71 +218,25 @@ async function preview() {
             `<button type="button" data-card-edit="${area.key}" data-edit-tab="${area.tab || "text"}" class="card-edit-region" style="left:${area.x / 7.5}%;top:${area.y / 10.4}%;width:${area.w / 7.5}%;height:${area.h / 10.4}%" aria-label="Редагувати: ${e(area.label)}" title="${e(area.label)}"></button>`,
         )
         .join("");
+    localizeUI(hitAreas);
     $("#overflow-warning").hidden = !r.overflow;
   } catch (err) {
     toast(err.message, true);
   }
 }
 function projects() {
-  return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">YOUR PRIVATE ARCHIVE</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3>${e(c.name || "Без назви")}</h3><p>${e(c.type || "Власна карта")} · 63,5 × 88 мм</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
-}
-const categories = [
-  ["all", "Усі матеріали"],
-  ["decks", "Колоди"],
-  ["back", "Сорочки"],
-  ["mats", "Планшети"],
-  ["boards", "Поля"],
-  ["rules", "Правила"],
-];
-function packList() {
-  const q = search.toLowerCase();
-  return library.filter(
-    (p) =>
-      (filter === "all" ||
-        (filter === "rules" && p.files.length) ||
-        (filter === "back" &&
-          (p.cards.some((c) => c.kind === "back") ||
-            p.pages.some((c) => c.kind === "back"))) ||
-        p.category === filter) &&
-      (!q ||
-        (
-          p.title +
-          " " +
-          p.subtitle +
-          " " +
-          p.cards.map((c) => c.name).join(" ")
-        )
-          .toLowerCase()
-          .includes(q)),
-  );
+  return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">МОЇ ПРОЄКТИ</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3 data-user-content>${e(c.name || t("Без назви"))}</h3><p data-user-content>${e(c.type || t("Власна карта"))} · ${t("63,5 × 88 мм")}</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
 }
 function libraryView() {
-  const p = library.find((p) => p.id === packId);
-  if (p) return packView(p);
-  const list = packList();
-  return `<main class="content-page"><div class="library-hero"><div><div class="eyebrow">THE UNDERDARK ARCHIVE</div><h1>Зібрано для<br><i>вашого столу.</i></h1><p>Фанатські колоди, сорочки, планшети та поля.<br>Усе з наданих матеріалів — в одному місці.</p></div><div class="archive-mark">${icon("book", 90)}<span>${library.length} НАБОРІВ / ${library.reduce((n, p) => n + p.cards.length, 0)} ДИЗАЙНІВ КАРТ</span></div></div><div class="library-toolbar"><div class="category-tabs">${categories.map(([id, label]) => `<button class="${filter === id ? "selected" : ""}" data-filter="${id}">${label}</button>`).join("")}</div><input id="library-search" type="search" placeholder="Знайти колоду або карту…" value="${e(search)}" aria-label="Пошук у бібліотеці"></div><div id="pack-grid" class="pack-grid">${list.map((p) => packTile(p)).join("") || '<p class="empty-state">Нічого не знайдено. Спробуйте іншу назву.</p>'}</div><p class="library-note">Фанатські матеріали з вашої локальної колекції. Авторство оригінальних компонентів належить їхнім правовласникам; це неофіційна майстерня.</p></main>`;
-}
-function packTile(p) {
-  const cover =
-    p.cards.find((c) => c.kind === "market") || p.cards[0] || p.pages[0];
-  return `<button class="pack-tile" data-pack="${p.id}"><div class="pack-cover ${p.category}">${cover ? `<img src="${e(cover.image)}" alt="${e(p.title)}" loading="lazy">` : icon("book", 64)}<span class="pack-category">${p.category === "decks" ? "КОЛОДА" : p.category === "mats" ? "ПЛАНШЕТИ" : "ПОЛЕ"}</span>${p.note ? '<span class="pack-note-dot" title="Є примітка до джерела"></span>' : ""}</div><div class="pack-info"><div><h3>${e(p.title)}</h3><p>${e(p.subtitle)}</p></div>${icon("chevron")}</div><div class="pack-meta"><span>${p.cards.length ? p.cards.length + " дизайнів" : p.pages.length + " сторінок"}</span><span>${p.files.length} файлів</span></div></button>`;
-}
-function packView(p) {
-  let cards =
-    filter === "back"
-      ? [...p.cards, ...p.pages].filter((c) => c.kind === "back")
-      : p.cards;
-  return `<main class="content-page"><button class="text-button back-library" id="back-library">← Уся бібліотека</button><div class="page-heading"><div><div class="eyebrow">FAN EXPANSION / ARCHIVE</div><h1>${e(p.title)}</h1><p>${e(p.subtitle)}</p></div><span class="count-label">${p.cards.length} дизайнів · ${p.pages.length} сторінок</span></div>${p.note ? `<div class="info-note">${e(p.note)}</div>` : ""}<div class="resource-files">${p.files.map((f) => `<a class="resource-file" href="${e(f.url)}" download>${icon("download")}<span><b>${e(f.name)}</b><small>${f.type}${f.pages ? " · " + f.pages + " стор." : ""} · ${(f.size / 1048576).toFixed(1)} МБ</small></span></a>`).join("") || '<p class="muted">Карти доступні нижче окремими зображеннями.</p>'}</div>${cards.length ? `<h2 class="section-label">${filter === "back" ? "Сорочки" : "Карти та компоненти"} <span>${cards.length}</span></h2><div class="asset-grid">${cards.map((c) => assetTile(c, p)).join("")}</div>` : ""}${p.pages.length && filter !== "back" ? `<h2 class="section-label">Аркуші та планшети <span>${p.pages.length}</span></h2><div class="asset-grid sheets">${p.pages.map((c) => assetTile(c, p)).join("")}</div>` : ""}${p.rules ? `<details class="rules"><summary>Правила з оригінального документа</summary><pre>${e(p.rules)}</pre></details>` : ""}</main>`;
-}
-function assetTile(c, p) {
-  return `<button class="asset-tile" data-asset="${e(c.id)}" data-in-pack="${p.id}"><div><img src="${e(c.image)}" alt="${e(c.name)}" loading="lazy"></div><h3>${e(c.name)}</h3><p>${{ market: "Карта ринку", back: "Сорочка", treasure: "Скарб", stalker: "Сталкер", exalted: "Додаткова карта", ascended: "Дракон", mat: "Планшет", board: "Поле", sheet: "Аркуш", update: "Оновлення" }[c.kind] || "Компонент"}${c.copies ? " · " + c.copies + " коп." : ""}</p></button>`;
+  return renderLibrary({ library, filter, search, packId });
 }
 function openAsset(id, pack) {
   const p = library.find((p) => p.id === pack),
     a = [...p.cards, ...p.pages].find((a) => a.id === id);
   const d = document.createElement("dialog");
   d.className = "asset-dialog";
-  d.innerHTML = `<button class="icon-button dialog-close" aria-label="Закрити">${icon("close")}</button><div class="asset-large"><img src="${e(a.image)}" alt="${e(a.name)}"></div><div class="asset-detail"><div class="eyebrow">${e(p.title)}</div><h2>${e(a.name)}</h2><p class="muted">${e(p.subtitle)}</p><div class="asset-actions"><a class="button primary" href="${e(a.image)}" download="${e(safeName(a.name))}.webp">${icon("download")} Зберегти зображення</a>${a.sourceFile ? `<a class="button ghost" href="${e(a.sourceFile)}" download>PDF джерела · стор. ${a.page}</a>` : ""}${a.kind === "back" ? '<button class="button ghost" id="use-back">Використати як сорочку</button>' : ""}</div></div>`;
+  d.innerHTML = `<button class="icon-button dialog-close" aria-label="Закрити">${icon("close")}</button><div class="asset-large"><img src="${e(a.image)}" alt="${e(a.name)}"></div><div class="asset-detail"><div class="eyebrow">${e(p.title)}</div><h2 data-source-text>${e(a.name)}</h2><p class="muted">${e(p.subtitle)}</p><div class="asset-actions"><a class="button primary" href="${e(a.image)}" download="${e(safeName(a.name))}.${a.image.endsWith(".png") ? "png" : "webp"}">${icon("download")} Зберегти зображення</a>${a.sourceFile ? `<a class="button ghost" href="${e(a.sourceFile)}" download>${t("Завантажити оригінал")} · ${a.page}</a>` : ""}${a.kind === "back" ? '<button class="button ghost" id="use-back">Використати як сорочку</button>' : ""}</div></div>`;
+  localizeUI(d);
   document.body.append(d);
   d.showModal();
   d.addEventListener("close", () => d.remove());
@@ -295,14 +261,27 @@ function route() {
 }
 function render() {
   const r = route();
+  document.documentElement.lang = locale;
+  document.title =
+    locale === "en"
+      ? "Card Builder — Tyrants of the Underdark"
+      : "Конструктор карт — Тирани Підземелля";
+  document.querySelector('meta[name="description"]').content =
+    locale === "en"
+      ? "Create print-ready Tyrants of the Underdark cards. Edit artwork, text and symbols, explore fan expansions and read game rules."
+      : "Створюйте карти Тиранів Підземелля для друку. Редагуйте зображення, текст і символи, переглядайте доповнення та читайте правила.";
+  const support = supportURL(siteConfig);
   $("#app").innerHTML =
     header(r) +
     (r === "library"
       ? libraryView()
-      : r === "projects"
-        ? projects()
-        : editor()) +
-    `<footer class="app-footer"><span>UNDERDARK ATELIER <b>Неофіційна фанатська майстерня</b></span><span>63,5 × 88 мм · створено для вашого столу</span></footer>`;
+      : r === "rules"
+        ? rulesView(library, location.hash.slice(1).split("/")[1], rulePage)
+        : r === "projects"
+          ? projects()
+          : editor()) +
+    `<footer class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span>${support ? `<a class="support-link" href="${e(support)}" target="_blank" rel="noopener">${icon("heart", 16)} Підтримати проєкт</a>` : ""}<span>63,5 × 88 мм</span></footer>`;
+  localizeUI($("#app"));
   bind();
   if (r === "editor") preview();
   if (r === "projects")
@@ -314,6 +293,32 @@ function render() {
     });
 }
 function bind() {
+  if ($("#locale-switch"))
+    $("#locale-switch").onchange = async (ev) => {
+      setLocale(ev.target.value);
+      await persist();
+      render();
+    };
+  $$("[data-rule-page]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        rulePage = Number(n.dataset.rulePage);
+        render();
+      }),
+  );
+  $$("[data-rule-section]").forEach(
+    (n) =>
+      (n.onclick = () =>
+        document
+          .getElementById("rule-section-" + n.dataset.ruleSection)
+          ?.scrollIntoView({ block: "start" })),
+  );
+  $$("[data-rule-pack]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        location.hash = "library/" + n.dataset.rulePack;
+      }),
+  );
   $$("[data-deck-mark]").forEach(
     (n) =>
       (n.onclick = async () => {
@@ -459,7 +464,9 @@ function bind() {
     $("#delete-card").onclick = () => {
       if (
         !confirm(
-          "Видалити поточну карту? Експортуйте проєкт, якщо хочете залишити копію.",
+          t(
+            "Видалити поточну карту? Експортуйте проєкт, якщо хочете залишити копію.",
+          ),
         )
       )
         return;
@@ -491,30 +498,21 @@ function bind() {
   $$("[data-pack]").forEach(
     (n) =>
       (n.onclick = () => {
-        packId = n.dataset.pack;
-        render();
-        window.scrollTo(0, 0);
+        location.hash = "library/" + n.dataset.pack;
       }),
   );
   if ($("#back-library"))
     $("#back-library").onclick = () => {
       packId = null;
-      render();
+      if (location.hash !== "#library") location.hash = "library";
+      else render();
     };
   if ($("#library-search"))
     $("#library-search").oninput = (ev) => {
       search = ev.target.value;
-      $("#pack-grid").innerHTML =
-        packList().map(packTile).join("") ||
-        '<p class="empty-state">Нічого не знайдено.</p>';
-      $$("[data-pack]").forEach(
-        (n) =>
-          (n.onclick = () => {
-            packId = n.dataset.pack;
-            render();
-            window.scrollTo(0, 0);
-          }),
-      );
+      $("#library-results").innerHTML = libraryResults(library, filter, search);
+      localizeUI($("#library-results"));
+      bind();
     };
   $$("[data-asset]").forEach(
     (n) => (n.onclick = () => openAsset(n.dataset.asset, n.dataset.inPack)),
@@ -526,7 +524,7 @@ async function doExport(button) {
     name = safeName(card().name);
   button.disabled = true;
   const original = button.innerHTML;
-  button.textContent = "Готуємо файл…";
+  button.textContent = t("Готуємо файл…");
   try {
     await persist();
     if (type === "json")
@@ -710,9 +708,16 @@ try {
 } catch {
   toast("Бібліотека недоступна. Редактор працює незалежно.", true);
 }
+try {
+  siteConfig = await (await fetch("site-config.json")).json();
+} catch {}
 window.addEventListener("hashchange", () => {
-  packId = null;
+  packId =
+    route() === "library" ? location.hash.slice(1).split("/")[1] || null : null;
+  rulePage = 0;
   render();
   window.scrollTo(0, 0);
 });
+packId =
+  route() === "library" ? location.hash.slice(1).split("/")[1] || null : null;
 render();

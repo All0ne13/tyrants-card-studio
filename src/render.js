@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { W, H, cardNumberLabel } from "./model.js";
 import { DECK_MARKS } from "./deck-marks.js";
 import { SYMBOLS } from "./symbols.js";
@@ -155,12 +156,12 @@ export async function renderCard(
       ctx.fillStyle = "#a798b4";
       ctx.textAlign = "center";
       ctx.font = "400 21px Manrope,sans-serif";
-      ctx.fillText("ДОДАЙТЕ ІЛЮСТРАЦІЮ", W / 2, ar.y + ar.h / 2);
+      ctx.fillText(t("ДОДАЙТЕ ІЛЮСТРАЦІЮ"), W / 2, ar.y + ar.h / 2);
     }
   }
   ctx.fillStyle = "#fff";
   ctx.textAlign = "left";
-  sourceLettering(ctx, atlas, card.name || (preview ? "Назва карти" : ""), {
+  sourceLettering(ctx, atlas, card.name || (preview ? t("Назва карти") : ""), {
     x: 47,
     y: 98,
     maxWidth: 565,
@@ -172,13 +173,13 @@ export async function renderCard(
     align: "right",
     maxWidth: 110,
   });
-  sourceLettering(ctx, atlas, card.aspectText || (preview ? "АСПЕКТ" : ""), {
+  sourceLettering(ctx, atlas, card.aspectText || (preview ? t("АСПЕКТ") : ""), {
     x: 132,
     y: 151,
     kind: "meta",
     maxWidth: 360,
   });
-  sourceLettering(ctx, atlas, card.type || (preview ? "ТИП" : ""), {
+  sourceLettering(ctx, atlas, card.type || (preview ? t("ТИП") : ""), {
     x: 704,
     y: 151,
     kind: "race",
@@ -251,7 +252,7 @@ export async function renderCard(
   if (preview && !card.effect && !card.flavour) {
     ctx.font = "400 25px CardRules,Arial,sans-serif";
     ctx.fillStyle = "#aaa1a9";
-    ctx.fillText("Ефект карти та художній текст", 67, whiteTop + 44);
+    ctx.fillText(t("Ефект карти та художній текст"), 67, whiteTop + 44);
   }
   ctx.fillStyle = "#fff";
   if (card.deckVP) {
@@ -317,7 +318,7 @@ export async function renderCard(
       h: ar.h,
       tab: "art",
     },
-    { key: "name", label: "Назва карти", x: 40, y: 30, w: 570, h: 80 },
+    { key: "name", label: t("Назва карти"), x: 40, y: 30, w: 570, h: 80 },
     { key: "cost", label: "Вартість", x: 625, y: 30, w: 90, h: 80 },
     {
       key: "aspectText",

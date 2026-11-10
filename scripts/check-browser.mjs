@@ -18,6 +18,7 @@ const page = await ctx.newPage(),
 page.on("pageerror", (e) => errors.push(e.message));
 const base = process.env.TEST_URL || "http://127.0.0.1:4188/";
 await page.goto(base);
+await page.locator("#locale-switch").selectOption("uk");
 await page.locator("#preview").waitFor();
 await page.waitForTimeout(1000);
 await page.screenshot({ path: out + "/editor-desktop.png", fullPage: true });
@@ -39,7 +40,8 @@ await page.locator('[data-tab="art"]').click();
 const chooser = page.waitForEvent("filechooser");
 await page.locator('[data-upload="art"]').click();
 const manifest = await (await fetch(base + "library.json")).json();
-const art = manifest[0].cards[0].image;
+const art = manifest.find((p) => p.cards.some((c) => c.kind === "market"))
+  .cards[0].image;
 await (
   await chooser
 ).setFiles({
@@ -106,10 +108,11 @@ for (const viewport of sizes) {
 await page.getByRole("link", { name: "Бібліотека", exact: true }).click();
 await page.locator(".pack-tile").first().waitFor();
 const packs = await page.locator(".pack-tile").count();
-if (packs !== 12) throw Error("Library expected 12 packs");
+if (packs !== manifest.length)
+  throw Error("Library pack count differs from manifest");
 await page.screenshot({ path: out + "/library-mobile.png", fullPage: true });
 await page.setViewportSize({ width: 1440, height: 1000 });
-await page.locator(".pack-tile").first().click();
+await page.locator('[data-pack="faerie"]').click();
 await page.locator(".asset-tile").first().click();
 await page.locator("dialog").waitFor();
 await page.screenshot({ path: out + "/library-card.png", fullPage: true });

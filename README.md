@@ -1,6 +1,6 @@
-# Underdark Atelier
+# Card Builder — Tyrants of the Underdark
 
-A browser-based card constructor and fan-material library for **Tyrants of the Underdark**. Interface: Ukrainian; card content accepts any language supported by the bundled fonts.
+A browser-based card constructor and fan-material library for **Tyrants of the Underdark**. Interface: English by default, with a persistent Ukrainian language switch. User-authored cards and original resources retain their own language.
 
 ## Features
 
@@ -53,6 +53,14 @@ The requested card size is 63.5 × 88 mm. Check fit against your physical cards 
 Source PDFs retain their original page sizes and are available separately from the card constructor exports.
 
 ## Library preparation
+
+The library separates individual card backs from printed front/back sheets and token reverses. Deck covers use front-facing components and stay within their thumbnail area. The Rules filter contains only classified rulebooks, expansion instructions and reference cards, rather than every available file.
+
+`scripts/curate-library.py` runs after the library import. It assigns resource categories, produces full-card covers and readable rule-page previews, and preserves headings, lists and Word line breaks for the text reader. Original documents remain downloadable. The base-game rulebook opens from a verified public PDF mirror; it is an external resource and requires internet access.
+
+### Optional support link
+
+Set `supportUrl` in `dist/site-config.json` to your real HTTPS donation URL and deploy. The support link stays hidden while this value is empty. No payment service or destination is created automatically.
 
 `scripts/prepare-library.py` documents the one-time import from the supplied local collection, using PyMuPDF and Pillow. It creates web previews and optimized printable source files without modifying the originals. Source paths are configurable in that script.
 
