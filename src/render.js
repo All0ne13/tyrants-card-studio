@@ -1,4 +1,5 @@
-import { W, H } from "./model.js";
+import { W, H, cardNumberLabel } from "./model.js";
+import { DECK_MARKS } from "./deck-marks.js";
 import { SYMBOLS } from "./symbols.js";
 import { drawRichText } from "./rich-text.js";
 import { sourceLettering } from "./source-lettering.js";
@@ -127,7 +128,9 @@ export async function renderCard(
     getImage(
       card.deckMark === "none"
         ? ""
-        : card.deckIcon || "assets/card-parts/deck-faerie.png",
+        : card.deckMark === "custom"
+          ? card.deckIcon
+          : DECK_MARKS[card.deckMark]?.image || DECK_MARKS.faerie.image,
     ),
     getImage("assets/card-parts/inner-ring.png"),
   ]);
@@ -138,7 +141,8 @@ export async function renderCard(
   gradient.addColorStop(0.93, "#000");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
-  const ar = { x: 46, y: 162, w: 658, h: 502 };
+  const whiteTop = 934 - Number(card.rulesHeight || 260);
+  const ar = { x: 46, y: 162, w: 658, h: whiteTop - 172 };
   if (art) drawCover(ctx, art, ar, card);
   else {
     ctx.fillStyle = "#241e2e";
@@ -200,38 +204,39 @@ export async function renderCard(
     ctx.restore();
   } else if (aspect) ctx.drawImage(aspect, 39, 119, 99, 100);
   ctx.fillStyle = "#fff";
-  ctx.fillRect(46, 674, 658, 260);
+  ctx.fillRect(46, whiteTop, 658, 934 - whiteTop);
   // The short teeth are part of the source frame, not symbols typed into the effect.
   ctx.fillStyle = "#08060b";
-  ctx.fillRect(46, 664, 658, 10);
+  ctx.fillRect(46, whiteTop - 10, 658, 10);
   for (const x of [156, 265, 374, 483, 592]) {
     ctx.beginPath();
-    ctx.moveTo(x - 9, 664);
-    ctx.lineTo(x + 9, 664);
-    ctx.lineTo(x, 691);
+    ctx.moveTo(x - 9, whiteTop - 10);
+    ctx.lineTo(x + 9, whiteTop - 10);
+    ctx.lineTo(x, whiteTop + 17);
     ctx.closePath();
     ctx.fill();
   }
   ctx.save();
   ctx.beginPath();
-  ctx.rect(58, 686, 634, 234);
+  ctx.rect(58, whiteTop + 12, 634, 920 - whiteTop - 12);
   ctx.clip();
   ctx.textAlign = "left";
   ctx.fillStyle = "#080808";
   const size = card.fontSize;
   const rules = await drawRichText(ctx, card.effect, {
     x: 67,
-    y: 716,
+    y: whiteTop + 42,
     width: 616,
     size,
     customSymbols: card.customSymbols,
     getImage,
   });
   let bottom = rules.bottom;
+  const flavourY = card.effect ? rules.baseline + size * 1.55 : whiteTop + 42;
   if (card.flavour) {
     const flavour = await drawRichText(ctx, card.flavour, {
       x: 67,
-      y: card.effect ? rules.baseline + size * 1.55 : 716,
+      y: flavourY,
       width: 616,
       size,
       italic: true,
@@ -246,7 +251,7 @@ export async function renderCard(
   if (preview && !card.effect && !card.flavour) {
     ctx.font = "400 25px CardRules,Arial,sans-serif";
     ctx.fillStyle = "#aaa1a9";
-    ctx.fillText("Ефект карти та художній текст", 67, 718);
+    ctx.fillText("Ефект карти та художній текст", 67, whiteTop + 44);
   }
   ctx.fillStyle = "#fff";
   if (card.deckVP) {
@@ -282,11 +287,16 @@ export async function renderCard(
       maxWidth: 66,
     });
   }
-  if (deck) ctx.drawImage(deck, 49, 951, 55, 55);
+  if (deck) {
+    const ratio = Math.min(60 / deck.width, 56 / deck.height),
+      w = deck.width * ratio,
+      h = deck.height * ratio;
+    ctx.drawImage(deck, 79 - w / 2, 979 - h / 2, w, h);
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = "#fff";
   ctx.font = "italic 30px CardRules,Arial,sans-serif";
-  ctx.fillText(card.cardNumber || "", 130, 989, 190);
+  ctx.fillText(cardNumberLabel(card), 130, 989, 190);
   ctx.textAlign = "right";
   ctx.font = "400 23px CardRules,Arial,sans-serif";
   ctx.fillText(card.footer.slice(0, 90), 704, 1016, 520);
@@ -297,5 +307,87 @@ export async function renderCard(
     ctx.fill();
   }
   ctx.restore();
-  return { canvas: c, overflow };
+  const regions = [
+    {
+      key: "art",
+      label: "Змінити ілюстрацію",
+      x: 46,
+      y: 162,
+      w: 658,
+      h: ar.h,
+      tab: "art",
+    },
+    { key: "name", label: "Назва карти", x: 40, y: 30, w: 570, h: 80 },
+    { key: "cost", label: "Вартість", x: 625, y: 30, w: 90, h: 80 },
+    {
+      key: "aspectText",
+      label: "Назва аспекту",
+      x: 137,
+      y: 116,
+      w: 350,
+      h: 44,
+    },
+    { key: "type", label: "Тип / раса", x: 495, y: 116, w: 210, h: 44 },
+    {
+      key: "aspect",
+      label: "Вибрати значок аспекту",
+      x: 38,
+      y: 118,
+      w: 102,
+      h: 103,
+      tab: "icons",
+    },
+    {
+      key: "effect",
+      label: "Текст ефекту та символи",
+      x: 58,
+      y: whiteTop + 18,
+      w: 634,
+      h: card.effect ? Math.max(size * 1.2, rules.bottom - whiteTop - 8) : 80,
+    },
+    {
+      key: "flavour",
+      label: "Художній текст",
+      x: 58,
+      y: card.effect ? flavourY - size : whiteTop + 100,
+      w: 634,
+      h: Math.max(28, 920 - (card.effect ? flavourY - size : whiteTop + 100)),
+    },
+    {
+      key: "deckMark",
+      label: "Вибрати знак колоди",
+      x: 43,
+      y: 945,
+      w: 77,
+      h: 65,
+      tab: "icons",
+    },
+    {
+      key: "cardNumber",
+      label: "Номер карти / карт у колоді",
+      x: 125,
+      y: 947,
+      w: 155,
+      h: 53,
+    },
+    { key: "copies", label: "Кількість крапок", x: 290, y: 956, w: 180, h: 42 },
+    {
+      key: "footer",
+      label: "Авторський підпис",
+      x: 340,
+      y: 994,
+      w: 365,
+      h: 35,
+    },
+    { key: "deckVP", label: "Очки в колоді", x: 537, y: 896, w: 62, h: 88 },
+    {
+      key: "innerVP",
+      label: "Очки внутрішнього кола",
+      x: 598,
+      y: 889,
+      w: 101,
+      h: 102,
+    },
+  ];
+  return { canvas: c, overflow, regions };
 }

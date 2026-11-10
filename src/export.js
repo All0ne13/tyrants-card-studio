@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { zipSync, strToU8 } from "fflate";
 import { renderCard } from "./render.js";
-import { CARD_MM, sheetPositions, safeName } from "./model.js";
+import { CARD_MM, sheetPositions, safeName, cardNumberError } from "./model.js";
 import { pngPhysicalSize } from "./png.js";
 export function download(blob, name) {
   const url = URL.createObjectURL(blob),
@@ -12,6 +12,8 @@ export function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 export async function printable(card, options = {}) {
+  const numberError = cardNumberError(card);
+  if (numberError) throw Error(numberError);
   await document.fonts.ready;
   const result = await renderCard(card, options);
   if (result.overflow)

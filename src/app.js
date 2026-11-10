@@ -1,4 +1,12 @@
-import { blankCard, validateCard, ASPECTS, safeName } from "./model.js";
+import {
+  blankCard,
+  validateCard,
+  ASPECTS,
+  safeName,
+  cardNumberLabel,
+  cardNumberError,
+} from "./model.js";
+import { DECK_MARKS } from "./deck-marks.js";
 import { renderCard, getImage } from "./render.js";
 import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
@@ -82,12 +90,40 @@ function changed() {
   clearTimeout(timer);
   timer = setTimeout(persist, 450);
   preview();
+  updateNumberFeedback();
+}
+function updateNumberFeedback() {
+  const summary = $("#card-number-summary"),
+    error = $("#card-number-error");
+  if (summary) summary.textContent = cardNumberLabel(card());
+  if (error) {
+    error.textContent = cardNumberError(card());
+    error.hidden = !error.textContent;
+  }
 }
 function header(route) {
   return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 25)}</span><span>UNDERDARK<span class="brand-sub">ATELIER / CARD STUDIO</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${route === "library" ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button></header>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
+}
+function footerSettings() {
+  return `<section class="deck-mark-settings"><h3>Знак та номер карти · зліва внизу</h3><div class="deck-mark-grid" role="group" aria-label="Вибір знака колоди">${Object.entries(
+    DECK_MARKS,
+  )
+    .map(
+      ([key, v]) =>
+        `<button type="button" data-deck-mark="${key}" class="deck-mark-choice ${card().deckMark === key ? "selected" : ""}" aria-label="Знак колоди: ${e(v.label)}" aria-pressed="${card().deckMark === key}" title="${e(v.label)}"><img src="${v.image}" alt=""><span>${e(v.label)}</span></button>`,
+    )
+    .join(
+      "",
+    )}${card().deckIcon ? `<button type="button" data-deck-mark="custom" class="deck-mark-choice ${card().deckMark === "custom" ? "selected" : ""}" aria-label="Власний знак колоди" aria-pressed="${card().deckMark === "custom"}"><img src="${e(card().deckIcon)}" alt=""><span>Мій знак</span></button>` : ""}<button type="button" data-deck-mark="none" class="deck-mark-choice ${card().deckMark === "none" ? "selected" : ""}" aria-label="Без знака колоди" aria-pressed="${card().deckMark === "none"}"><b>—</b><span>Без знака</span></button></div><button type="button" class="text-button upload-deck" data-upload="deckIcon">${icon("upload", 14)} Додати власний знак</button><div class="card-number-fields"><label class="field"><span>Номер карти</span><input type="number" inputmode="numeric" data-key="cardNumber" min="1" max="9999" step="1" value="${e(card().cardNumber)}"></label><b>/</b><label class="field"><span>Карт у колоді</span><input type="number" inputmode="numeric" data-key="deckSize" min="1" max="9999" step="1" value="${e(card().deckSize)}"></label></div><p class="number-feedback">На карті: <strong id="card-number-summary">${e(cardNumberLabel(card()))}</strong></p><p class="number-error" id="card-number-error" ${cardNumberError(card()) ? "" : "hidden"}>${e(cardNumberError(card()))}</p></section>`;
+}
+function layoutSettings() {
+  return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект · як Lost Huntman</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний · як Gremlin</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
+}
+function previewInstruction() {
+  return '<div class="preview-foot">Натисніть текст або значок на карті, щоб змінити.</div>';
 }
 function symbolButton(key, target) {
   const s = SYMBOLS[key];
@@ -105,7 +141,7 @@ function richField(label, key, placeholder, max) {
 }
 function panel() {
   if (tab === "text")
-    return `<div class="panel-caption">01 / ТЕКСТ КАРТИ</div>${field("Назва", "name", { placeholder: "Наприклад, High Priestess", max: 65 })}<div class="field-row">${field("Вартість", "cost", { placeholder: "—", max: 4 })}${field("Тип / раса", "type", { placeholder: "Drow", max: 35 })}</div>${field("Назва аспекту", "aspectText", { placeholder: "Obedience", max: 35 })}${richField("Ефект карти", "effect", "Напишіть дію та її умови…", 1500)}${richField("Художній текст", "flavour", "Цитата або коротка історія…", 900)}<p class="markup-help">Кнопки вставляють символ у місце курсора. **Текст** — жирний, *текст* — курсив. Коди [influence] і [power] у прев’ю та файлах стають значками.</p><div class="field-row">${field("Очки в колоді", "deckVP", { placeholder: "1", max: 3 })}${field("Внутрішнє коло", "innerVP", { placeholder: "3", max: 3 })}</div><div class="field-row">${field("Кількість крапок", "copies", { placeholder: "1–8", max: 1 })}${field("Номер карти", "cardNumber", { placeholder: "1/40", max: 18 })}</div>${field("Підпис праворуч унизу", "footer", { placeholder: "© 2020 Wizards", max: 90 })}<label class="field range"><span>Розмір тексту <b>${card().fontSize} px</b></span><input data-key="fontSize" type="range" min="17" max="46" value="${card().fontSize}"></label>`;
+    return `<div class="panel-caption">01 / ТЕКСТ КАРТИ</div>${footerSettings()}${layoutSettings()}${field("Назва", "name", { placeholder: "Наприклад, High Priestess", max: 65 })}<div class="field-row">${field("Вартість", "cost", { placeholder: "—", max: 4 })}${field("Тип / раса", "type", { placeholder: "Drow", max: 35 })}</div>${field("Назва аспекту", "aspectText", { placeholder: "Obedience", max: 35 })}${richField("Ефект карти", "effect", "Напишіть дію та її умови…", 1500)}${richField("Художній текст", "flavour", "Цитата або коротка історія…", 900)}<p class="markup-help">Кнопки вставляють символ у місце курсора. **Текст** — жирний, *текст* — курсив. Коди [influence] і [power] у прев’ю та файлах стають значками.</p><div class="field-row">${field("Очки в колоді", "deckVP", { placeholder: "1", max: 3 })}${field("Внутрішнє коло", "innerVP", { placeholder: "3", max: 3 })}</div><div class="field-row">${field("Кількість крапок", "copies", { placeholder: "1–8", max: 1 })}</div>${field("Підпис праворуч унизу", "footer", { placeholder: "© 2020 Wizards", max: 90 })}<label class="field range"><span>Розмір тексту <b>${card().fontSize} px</b></span><input data-key="fontSize" type="range" min="17" max="46" value="${card().fontSize}"></label>`;
   if (tab === "art")
     return `<div class="panel-caption">02 / ІЛЮСТРАЦІЯ</div><button class="upload-box" data-upload="art">${icon("image", 34)}<strong>${card().art ? "Змінити зображення" : "Додати ілюстрацію"}</strong><span>PNG, JPG або WebP · до 15 МБ</span></button><p class="muted">Зображення заповнює вікно карти. Зсуньте та збільште його, щоб вибрати композицію.</p>${[
       ["artScale", "Масштаб", 1, 3, 0.01],
@@ -129,7 +165,7 @@ function panel() {
       )
       .join(
         "",
-      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}<div class="deck-mark-settings"><h3>Знак колоди · зліва внизу</h3><label class="field"><span>Відображення</span><select data-key="deckMark"><option value="faerie" ${card().deckMark !== "none" ? "selected" : ""}>Знак Faerie / власний</option><option value="none" ${card().deckMark === "none" ? "selected" : ""}>Без знака</option></select></label><button class="button ghost small" data-upload="deckIcon">${icon("upload", 14)} Свій знак колоди</button>${card().deckIcon ? '<button class="text-button" data-clear="deckIcon">Повернути знак Faerie</button>' : ""}</div><label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
+      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}${footerSettings()}<label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
   return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Фіолетовий візерунок</option><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна Minion</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : '<div class="info-note">Сорочка з наявних компонентів Tyrants of the Underdark.</div>'}`;
 }
 function editor() {
@@ -145,7 +181,7 @@ function editor() {
     )
     .join(
       "",
-    )}</div><div class="panel-content">${panel()}</div></aside><main class="preview-panel"><div class="preview-top"><span class="pill"><i></i> ЖИВЕ ПРЕВ’Ю</span><span>63,5 × 88 мм</span></div><div class="card-stage"><span class="stage-measure measure-top">63,5 ММ</span><canvas id="preview" aria-label="Прев’ю карти"></canvas><span class="stage-measure measure-side">88 ММ</span></div><div class="side-switch"><button data-side="front" class="${side === "front" ? "selected" : ""}">Лицьова сторона</button><button data-side="back" class="${side === "back" ? "selected" : ""}">Сорочка</button></div><div class="overflow-warning" id="overflow-warning" hidden>Текст не вміщується. Зменште шрифт або скоротіть текст.</div><div class="preview-foot">${icon("check", 15)} Рамка збережена · файл без підказок</div></main><aside class="export-panel"><div class="panel-caption">ГОТОВО ДО ДРУКУ</div><h2>З паперу —<br>у Підзем’я.</h2><p class="muted">Друкований PDF із точним розміром карти. Без скриншотів і ручного масштабування.</p><div class="print-spec"><div><span>Розмір</span><strong>63,5 × 88 мм</strong></div><div><span>Зображення</span><strong>≈ 300 DPI</strong></div><div><span>Ваша колода</span><strong>${state.cards.length} ${state.cards.length === 1 ? "карта" : "карт"}</strong></div></div><label class="field"><span>Експортувати</span><select id="export-scope"><option value="current">Поточну карту</option><option value="all">Усі мої карти</option></select></label><label class="check-field"><input id="include-back" type="checkbox" checked><span>Додати сорочки</span></label><button class="button primary wide" data-export="pdf">${icon("download")} Зберегти PDF</button><button class="button ghost wide" data-export="a4">${icon("print")} Аркуш A4 · до 9 карт</button><div class="export-links"><button data-export="png">PNG</button><button data-export="zip">ZIP</button><button data-export="json">Проєкт JSON</button></div><div class="print-hint"><b>Друкуйте в масштабі 100%.</b><br>Вимкніть «Підігнати до сторінки». Для A4 із сорочками — переворот уздовж довгого краю. Спочатку перевірте один аркуш.</div><div class="workspace-actions"><button class="button small ghost" id="duplicate">${icon("duplicate")} Копія</button><button class="icon-button danger" id="delete-card" aria-label="Видалити карту">${icon("trash")}</button></div></aside></div>`;
+    )}</div><div class="panel-content">${panel()}</div></aside><main class="preview-panel"><div class="preview-top"><span class="pill"><i></i> ЖИВЕ ПРЕВ’Ю</span><span>63,5 × 88 мм</span></div><div class="card-stage"><span class="stage-measure measure-top">63,5 ММ</span><canvas id="preview" aria-label="Прев’ю карти"></canvas><div id="card-hit-areas" class="card-hit-areas"></div><span class="stage-measure measure-side">88 ММ</span></div><div class="side-switch"><button data-side="front" class="${side === "front" ? "selected" : ""}">Лицьова сторона</button><button data-side="back" class="${side === "back" ? "selected" : ""}">Сорочка</button></div><div class="overflow-warning" id="overflow-warning" hidden>Текст не вміщується. Зменште шрифт або скоротіть текст.</div>${previewInstruction()}</main><aside class="export-panel"><div class="panel-caption">ГОТОВО ДО ДРУКУ</div><h2>З паперу —<br>у Підзем’я.</h2><p class="muted">Друкований PDF із точним розміром карти. Без скриншотів і ручного масштабування.</p><div class="print-spec"><div><span>Розмір</span><strong>63,5 × 88 мм</strong></div><div><span>Зображення</span><strong>≈ 300 DPI</strong></div><div><span>Ваша колода</span><strong>${state.cards.length} ${state.cards.length === 1 ? "карта" : "карт"}</strong></div></div><label class="field"><span>Експортувати</span><select id="export-scope"><option value="current">Поточну карту</option><option value="all">Усі мої карти</option></select></label><label class="check-field"><input id="include-back" type="checkbox" checked><span>Додати сорочки</span></label><button class="button primary wide" data-export="pdf">${icon("download")} Зберегти PDF</button><button class="button ghost wide" data-export="a4">${icon("print")} Аркуш A4 · до 9 карт</button><div class="export-links"><button data-export="png">PNG</button><button data-export="zip">ZIP</button><button data-export="json">Проєкт JSON</button></div><div class="print-hint"><b>Друкуйте в масштабі 100%.</b><br>Вимкніть «Підігнати до сторінки». Для A4 із сорочками — переворот уздовж довгого краю. Спочатку перевірте один аркуш.</div><div class="workspace-actions"><button class="button small ghost" id="duplicate">${icon("duplicate")} Копія</button><button class="icon-button danger" id="delete-card" aria-label="Видалити карту">${icon("trash")}</button></div></aside></div>`;
 }
 async function preview() {
   const c = $("#preview");
@@ -162,6 +198,14 @@ async function preview() {
     dest.width = r.canvas.width;
     dest.height = r.canvas.height;
     dest.getContext("2d").drawImage(r.canvas, 0, 0);
+    const hitAreas = $("#card-hit-areas");
+    if (hitAreas)
+      hitAreas.innerHTML = (r.regions || [])
+        .map(
+          (area) =>
+            `<button type="button" data-card-edit="${area.key}" data-edit-tab="${area.tab || "text"}" class="card-edit-region" style="left:${area.x / 7.5}%;top:${area.y / 10.4}%;width:${area.w / 7.5}%;height:${area.h / 10.4}%" aria-label="Редагувати: ${e(area.label)}" title="${e(area.label)}"></button>`,
+        )
+        .join("");
     $("#overflow-warning").hidden = !r.overflow;
   } catch (err) {
     toast(err.message, true);
@@ -270,6 +314,37 @@ function render() {
     });
 }
 function bind() {
+  $$("[data-deck-mark]").forEach(
+    (n) =>
+      (n.onclick = async () => {
+        card().deckMark = n.dataset.deckMark;
+        changed();
+        await persist();
+        render();
+      }),
+  );
+  const hitAreas = $("#card-hit-areas");
+  if (hitAreas)
+    hitAreas.onclick = (ev) => {
+      const n = ev.target.closest("[data-card-edit]");
+      if (!n) return;
+      tab = n.dataset.editTab;
+      side = "front";
+      render();
+      const target =
+        $(`[data-key="${n.dataset.cardEdit}"]`) ||
+        $(`[data-upload="${n.dataset.cardEdit}"]`) ||
+        (n.dataset.cardEdit === "deckMark"
+          ? $(".deck-mark-settings")
+          : n.dataset.cardEdit === "aspect"
+            ? $(".aspect-grid")
+            : null);
+      if (target) {
+        target.scrollIntoView({ behavior: "instant", block: "center" });
+        if (target.focus) target.focus({ preventScroll: true });
+        if (target.select) target.select();
+      }
+    };
   $$("[data-insert-symbol]").forEach(
     (n) =>
       (n.onclick = () => insertText(n.dataset.target, n.dataset.insertSymbol)),
@@ -314,6 +389,7 @@ function bind() {
           if (b) b.textContent = n.value + " px";
         }
         changed();
+        if (n.tagName === "SELECT") persist();
         if (n.dataset.key === "backMode") render();
       },
     ),
@@ -340,6 +416,7 @@ function bind() {
         card().aspect = n.dataset.aspect;
         card().icon = "";
         changed();
+        persist();
         render();
       }),
   );
@@ -527,7 +604,7 @@ async function upload(key) {
       0.94,
     );
     if (key === "art") Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
-    if (key === "deckIcon") card().deckMark = "faerie";
+    if (key === "deckIcon") card().deckMark = "custom";
     changed();
     render();
   } catch (err) {

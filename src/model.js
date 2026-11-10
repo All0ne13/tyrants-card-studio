@@ -1,3 +1,4 @@
+import { DECK_MARKS } from "./deck-marks.js";
 export const CARD_MM = { width: 63.5, height: 88 };
 export const W = 750,
   H = 1040;
@@ -23,8 +24,10 @@ export function blankCard() {
     innerVP: "",
     copies: "",
     footer: "",
-    cardNumber: "",
+    cardNumber: "1",
+    deckSize: "40",
     deckMark: "faerie",
+    deckPickerVersion: 1,
     deckIcon: "",
     customSymbols: [],
     art: "",
@@ -34,6 +37,7 @@ export function blankCard() {
     icon: "",
     purple: "#36235e",
     fontSize: 34,
+    rulesHeight: 260,
     layoutVersion: 2,
     backTitle: "",
     backSubtitle: "",
@@ -59,9 +63,24 @@ export function validateCard(input) {
   card.artY = Math.max(-100, Math.min(100, card.artY));
   if (!input.layoutVersion && card.fontSize === 24) card.fontSize = 34;
   card.layoutVersion = 2;
+  if (input.deckIcon && input.deckMark === "faerie" && !input.deckPickerVersion)
+    card.deckMark = "custom";
+  card.deckPickerVersion = 1;
+  const oldNumber = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(card.cardNumber);
+  if (oldNumber) {
+    card.cardNumber = oldNumber[1];
+    card.deckSize = oldNumber[2];
+  }
+  if (!/^\d+$/.test(card.cardNumber) || Number(card.cardNumber) < 1)
+    card.cardNumber = "1";
+  if (!/^\d+$/.test(card.deckSize) || Number(card.deckSize) < 1)
+    card.deckSize = "40";
+  if (!DECK_MARKS[card.deckMark] && !["custom", "none"].includes(card.deckMark))
+    card.deckMark = "faerie";
   if (!input.layoutVersion && card.purple === "#3c2363")
     card.purple = "#36235e";
   card.fontSize = Math.max(17, Math.min(46, card.fontSize));
+  card.rulesHeight = Math.max(150, Math.min(360, card.rulesHeight));
   if (Array.isArray(input.customSymbols))
     card.customSymbols = input.customSymbols.slice(0, 24).map((s) => {
       if (
@@ -102,4 +121,21 @@ export function safeName(name) {
       .trim()
       .slice(0, 80) || "card"
   );
+}
+export function cardNumberLabel(card) {
+  return `${card.cardNumber || "1"}/${card.deckSize || "40"}`;
+}
+export function cardNumberError(card) {
+  const current = String(card.cardNumber ?? "1"),
+    total = String(card.deckSize ?? "40");
+  if (
+    !/^\d{1,4}$/.test(current) ||
+    !/^\d{1,4}$/.test(total) ||
+    Number(current) < 1 ||
+    Number(total) < 1
+  )
+    return "Номер карти та кількість карт мають бути цілими числами від 1 до 9999.";
+  if (Number(current) > Number(total))
+    return "Номер карти не може перевищувати кількість карт у колоді.";
+  return "";
 }

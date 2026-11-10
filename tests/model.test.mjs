@@ -5,6 +5,8 @@ import {
   validateCard,
   sheetPositions,
   CARD_MM,
+  cardNumberLabel,
+  cardNumberError,
 } from "../src/model.js";
 test("new card starts with empty editable content", () => {
   const c = blankCard();
@@ -67,8 +69,41 @@ test("legacy cards keep user content while gaining the source layout", () => {
   assert.equal(c.effect, "My rule");
   assert.equal(c.fontSize, 34);
   assert.equal(c.layoutVersion, 2);
-  assert.equal(c.cardNumber, "");
+  assert.equal(c.cardNumber, "1");
+  assert.equal(c.deckSize, "40");
   assert.deepEqual(c.customSymbols, []);
+});
+test("every card starts with visible 1/40 numbering and imports old fractions", () => {
+  assert.equal(cardNumberLabel(blankCard()), "1/40");
+  const c = validateCard({ cardNumber: "38/40" });
+  assert.equal(c.cardNumber, "38");
+  assert.equal(c.deckSize, "40");
+  assert.equal(cardNumberLabel(c), "38/40");
+  assert.equal(cardNumberLabel(validateCard({ cardNumber: "" })), "1/40");
+});
+test("numbering validates the full integer range and deck size", () => {
+  assert.equal(
+    cardNumberError({ ...blankCard(), cardNumber: "41" }),
+    "Номер карти не може перевищувати кількість карт у колоді.",
+  );
+  assert.ok(cardNumberError({ ...blankCard(), cardNumber: "0" }));
+  assert.ok(cardNumberError({ ...blankCard(), deckSize: "1e2" }));
+  assert.equal(
+    cardNumberError({ ...blankCard(), cardNumber: "9", deckSize: "80" }),
+    "",
+  );
+});
+test("old custom deck icons remain selected and presets remain independent", () => {
+  const data = "data:image/png;base64,AA==";
+  assert.equal(
+    validateCard({ deckIcon: data, deckMark: "faerie" }).deckMark,
+    "custom",
+  );
+  assert.equal(
+    validateCard({ deckIcon: data, deckMark: "dragons", deckPickerVersion: 1 })
+      .deckMark,
+    "dragons",
+  );
 });
 test("custom symbols reject external URLs and unsafe token names", () => {
   assert.throws(() =>
