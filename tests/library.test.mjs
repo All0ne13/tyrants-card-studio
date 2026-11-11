@@ -9,6 +9,7 @@ import {
   supportURL,
   deckComposition,
   packRulesURL,
+  legacyRulesDestination,
 } from "../src/library.js";
 import { libraryResults, rulesView } from "../src/library-view.js";
 import { setLocale, t } from "../src/i18n.js";
@@ -134,10 +135,17 @@ test("every deck has a separate, working rules destination in both locales", () 
     for (const pack of library.filter((p) => p.category === "decks")) {
       const href = packRulesURL(pack);
       assert.ok(tiles.includes(`href="${href}"`), pack.id);
+      if (href.startsWith("https://")) {
+        assert.equal(new URL(href).hostname, "boardgamegeek.com");
+        assert.match(href, /\/thread\/\d+$/);
+        assert.equal(legacyRulesDestination(pack.id + "-rules"), href);
+        continue;
+      }
       const reader = rulesView(library, href.slice("#rules/".length));
       assert.match(reader, /rules-heading/);
       assert.ok(reader.includes(pack.title.split(" ")[0]), pack.id);
       assert.doesNotMatch(reader, /Rules not found|Правила не знайдено/);
+      assert.match(reader, /rules-article|page-reader|pdf-reader/);
     }
   }
   setLocale("en");

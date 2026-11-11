@@ -57,8 +57,10 @@ export function packTile(pack) {
     composition?.market && composition.extra
       ? `<small>${composition.market} ${t("ринкових")} + ${composition.extra} ${t("додаткових")}</small>`
       : "";
-  const rules = pack.category === "decks" || pack.rulesDocuments?.length;
-  return `<article class="pack-tile"><a class="pack-main" data-pack="${e(pack.id)}" href="#library/${e(pack.id)}"><div class="pack-cover ${e(pack.category)}">${pack.cover ? `<img src="${e(pack.cover)}" alt="" loading="lazy">` : `<span class="document-cover">${book}</span>`}<span class="pack-category">${t(pack.category === "decks" ? "КОЛОДА" : pack.category === "mats" ? "ПЛАНШЕТИ" : pack.category === "rules" ? "ПРАВИЛА" : "ПОЛЕ / ЖЕТОНИ")}</span></div><div class="pack-info"><div><h3 data-source-text>${e(pack.title)}</h3><p>${t(pack.subtitle)}</p></div><span aria-hidden="true">›</span></div></a><div class="pack-meta"><span class="pack-count">${count}${breakdown}</span>${rules ? `<a class="pack-rules-link" href="${e(packRulesURL(pack))}" aria-label="${e(t("Прочитати правила"))}: ${e(pack.title)}">${t("Прочитати правила")}</a>` : `<span>${pack.files.length} ${t("файлів")}</span>`}</div></article>`;
+  const rulesURL = packRulesURL(pack);
+  const rules = !!rulesURL;
+  const externalRules = rulesURL.startsWith("https://");
+  return `<article class="pack-tile"><a class="pack-main" data-pack="${e(pack.id)}" href="#library/${e(pack.id)}"><div class="pack-cover ${e(pack.category)}">${pack.cover ? `<img src="${e(pack.cover)}" alt="" loading="lazy">` : `<span class="document-cover">${book}</span>`}<span class="pack-category">${t(pack.category === "decks" ? "КОЛОДА" : pack.category === "mats" ? "ПЛАНШЕТИ" : pack.category === "rules" ? "ПРАВИЛА" : "ПОЛЕ / ЖЕТОНИ")}</span></div><div class="pack-info"><div><h3 data-source-text>${e(pack.title)}</h3><p>${t(pack.subtitle)}</p></div><span aria-hidden="true">›</span></div></a><div class="pack-meta"><span class="pack-count">${count}${breakdown}</span>${rules ? `<a class="pack-rules-link" href="${e(rulesURL)}" ${externalRules ? 'target="_blank" rel="noopener noreferrer"' : ""} aria-label="${e(t("Прочитати правила"))}: ${e(pack.title)}">${t("Прочитати правила")}</a>` : `<span>${pack.files.length} ${t("файлів")}</span>`}</div></article>`;
 }
 export function assetTile(asset, pack, showPack = false) {
   return `<button class="asset-tile" data-asset="${e(asset.id)}" data-in-pack="${e(pack.id)}"><div><img src="${e(asset.image)}" alt="${e(asset.name)}" loading="lazy"></div><h3 data-source-text>${e(showPack ? pack.title : asset.name)}</h3><p>${t(kinds[asset.kind] || "Компонент")}${showPack ? ` · ${e(asset.name)}` : ""}${asset.copies ? ` · ${asset.copies} ${t("коп.")}` : ""}</p></button>`;
@@ -159,14 +161,6 @@ function articleHTML(blocks) {
 }
 export function rulesView(library, id, pageNumber = 0) {
   const found = findRule(library, id);
-  const packWithoutDocument = library.find(
-    (p) =>
-      p.category === "decks" &&
-      !p.rulesDocuments?.length &&
-      id === p.id + "-rules",
-  );
-  if (!found && packWithoutDocument)
-    return missingDeckRulesView(packWithoutDocument);
   if (!found)
     return `<main class="content-page"><h1>Правила не знайдено.</h1><a href="#library">Уся бібліотека</a></main>`;
   const { pack, doc } = found,
@@ -181,7 +175,4 @@ export function rulesView(library, id, pageNumber = 0) {
   const downloadLabel =
     doc.format === "pdf" ? "Відкрити PDF" : "Завантажити оригінал";
   return `<main class="content-page rules-page"><a class="text-button back-library" href="#library">← ${t("Уся бібліотека")}</a><header class="rules-heading"><div class="eyebrow">Правила та інструкції</div><h1 data-source-text>${e(doc.title)}</h1><p class="source-language">Мова джерела: англійська</p><div class="reader-actions"><a class="button primary" href="${e(doc.sourceUrl)}" target="_blank" rel="noopener">${t(downloadLabel)}</a><button class="button ghost" data-rule-pack="${e(pack.id)}">До матеріалів колоди</button></div></header>${doc.format === "article" ? `<div class="reader-layout">${headings.length ? `<aside class="rules-toc"><h2>Зміст</h2>${headings.map((h) => `<button data-rule-section="${h.index}" data-source-text>${e(h.text)}</button>`).join("")}</aside>` : ""}<article class="rules-article" lang="en" data-source-text>${articleHTML(doc.blocks || [])}</article></div>` : doc.format === "pages" ? `<section class="page-reader"><div class="reader-pagination"><button class="button ghost small" data-rule-page="${selected - 1}" ${selected === 0 ? "disabled" : ""}>Попередня сторінка</button><span>${t("Сторінка")} ${selected + 1} / ${doc.pages.length}</span><button class="button ghost small" data-rule-page="${selected + 1}" ${selected === doc.pages.length - 1 ? "disabled" : ""}>Наступна сторінка</button></div><a class="rule-page-image" href="${e(doc.pages[selected])}" target="_blank" rel="noopener" aria-label="Відкрити на весь екран"><img src="${e(doc.pages[selected])}" alt="${e(doc.title)} — ${selected + 1}" width="1400"></a></section>` : `<section class="pdf-reader"><p>Оригінальний документ відкриється в новій вкладці.</p><object data="${e(doc.sourceUrl)}#view=FitH" type="application/pdf" aria-label="${e(doc.title)}"><a class="button primary" href="${e(doc.sourceUrl)}" target="_blank" rel="noopener">Відкрити PDF</a></object></section>`}</main>`;
-}
-function missingDeckRulesView(pack) {
-  return `<main class="content-page rules-page"><a class="text-button back-library" href="#library">← ${t("Уся бібліотека")}</a><header class="rules-heading"><div class="eyebrow">${t("Правила та інструкції")}</div><h1 data-source-text>${e(pack.title)}</h1></header><article class="rules-article"><h2>${t("Правила цієї колоди")}</h2><p>${t("Окремого документа з правилами цієї колоди в наданих матеріалах немає. Ефекти та умови зазначені на самих картах.")}</p>${pack.id === "svirfneblin" ? `<p>${t("У джерелі є аркуші оновлення V1.0 → V1.1, а не повні базові колоди.")}</p>` : ""}<div class="reader-actions"><a class="button primary" href="#library/${e(pack.id)}">${t("Переглянути карти колоди")}</a><a class="button ghost" href="#rules/base-game-rules">${t("Правила базової гри")}</a></div></article></main>`;
 }

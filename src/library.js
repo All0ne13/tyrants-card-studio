@@ -39,8 +39,23 @@ export function deckComposition(pack) {
     .reduce((sum, c) => sum + (c.copies ?? 1), 0);
   return { total: market + extra, market, extra, source: "card-copies" };
 }
+// Verified original author threads for decks without a separate rules file.
+// Do not label an empty page or a sheet of card artwork as a rulebook.
+const AUTHOR_RULES = {
+  faerie: "https://boardgamegeek.com/thread/3430582",
+  siege: "https://boardgamegeek.com/thread/2296676",
+  svirfneblin: "https://boardgamegeek.com/thread/3450358",
+};
 export function packRulesURL(pack) {
-  return "#rules/" + (pack.rulesDocuments?.[0]?.id || pack.id + "-rules");
+  const doc = pack.rulesDocuments?.[0];
+  return doc ? "#rules/" + doc.id : AUTHOR_RULES[pack.id] || "";
+}
+export function legacyRulesDestination(id) {
+  return (
+    Object.entries(AUTHOR_RULES).find(
+      ([pack]) => id === pack + "-rules",
+    )?.[1] || ""
+  );
 }
 export function matchesPack(pack, filter, search = "") {
   const items = assets(pack);

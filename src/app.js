@@ -11,7 +11,7 @@ import { renderCard, getImage } from "./render.js";
 import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
 import { locale, setLocale, t, localizeUI } from "./i18n.js";
-import { supportURL } from "./library.js";
+import { supportURL, legacyRulesDestination } from "./library.js";
 import {
   libraryView as renderLibrary,
   libraryResults,
@@ -261,6 +261,13 @@ function route() {
 }
 function render() {
   const r = route();
+  const originalRules =
+    r === "rules" &&
+    legacyRulesDestination(location.hash.slice(1).split("/")[1]);
+  if (originalRules) {
+    location.replace(originalRules);
+    return;
+  }
   document.documentElement.lang = locale;
   document.title =
     locale === "en"
