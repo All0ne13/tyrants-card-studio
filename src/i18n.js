@@ -1,5 +1,19 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Підтримати проєкт", "Support the project"],
+  [
+    "Дякую за підтримку майстерні карт!",
+    "Thank you for supporting the card studio!",
+  ],
+  ["Банка Monobank", "Monobank jar"],
+  ["Відкрити банку", "Open the jar"],
+  ["Адреса USDT у мережі TRC20", "USDT address on the TRC20 network"],
+  ["Копіювати адресу", "Copy address"],
+  ["Адресу скопійовано", "Address copied"],
+  [
+    "Виділіть адресу та скопіюйте її вручну.",
+    "Select the address and copy it manually.",
+  ],
   ["Прочитати правила", "Read rules"],
   ["карт", "cards"],
   ["за правилами", "in rulebook"],

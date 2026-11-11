@@ -113,8 +113,18 @@ function updateNumberFeedback() {
     error.hidden = !error.textContent;
   }
 }
+function supportMenu() {
+  const mono = supportURL(siteConfig);
+  const address = /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(
+    siteConfig.supportUsdtTrc20 || "",
+  )
+    ? siteConfig.supportUsdtTrc20
+    : "";
+  if (!mono && !address) return "";
+  return `<details class="support-menu" id="support-menu"><summary aria-controls="support-options">${icon("heart", 16)}<span>Підтримати проєкт</span></summary><div class="support-options" id="support-options"><p class="support-thanks">Дякую за підтримку майстерні карт!</p>${mono ? `<a class="support-mono" href="${e(mono)}" target="_blank" rel="noopener noreferrer"><strong>Банка Monobank</strong><span>Відкрити банку</span></a>` : ""}${address ? `<section class="support-crypto"><strong>USDT <small>TRC20 · TRON</small></strong><input id="support-address" aria-label="Адреса USDT у мережі TRC20" value="${e(address)}" readonly spellcheck="false"><button class="button ghost small" id="copy-support-address" type="button">Копіювати адресу</button><span class="support-copy-status" id="support-copy-status" role="status" aria-live="polite"></span></section>` : ""}</div></details>`;
+}
 function header(route) {
-  return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button></div></header>`;
+  return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button>${supportMenu()}</div></header>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
@@ -300,6 +310,23 @@ function render() {
     });
 }
 function bind() {
+  const copySupport = $("#copy-support-address");
+  if (copySupport)
+    copySupport.onclick = async () => {
+      const address = $("#support-address");
+      try {
+        await navigator.clipboard.writeText(address.value);
+        $("#support-copy-status").textContent = t("Адресу скопійовано");
+      } catch {
+        address.focus();
+        address.select();
+        $("#support-copy-status").textContent = t(
+          "Виділіть адресу та скопіюйте її вручну.",
+        );
+      }
+    };
+  if ($("#support-address"))
+    $("#support-address").onclick = (ev) => ev.target.select();
   if ($("#locale-switch"))
     $("#locale-switch").onchange = async (ev) => {
       setLocale(ev.target.value);
@@ -718,6 +745,17 @@ try {
 try {
   siteConfig = await (await fetch("site-config.json")).json();
 } catch {}
+document.addEventListener("pointerdown", (event) => {
+  const menu = $("#support-menu");
+  if (menu?.open && !menu.contains(event.target)) menu.open = false;
+});
+document.addEventListener("keydown", (event) => {
+  const menu = $("#support-menu");
+  if (event.key === "Escape" && menu?.open) {
+    menu.open = false;
+    menu.querySelector("summary").focus();
+  }
+});
 window.addEventListener("hashchange", () => {
   packId =
     route() === "library" ? location.hash.slice(1).split("/")[1] || null : null;
