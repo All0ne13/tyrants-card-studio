@@ -2093,11 +2093,12 @@ p {
   .support-menu {
     position: fixed;
     right: 16px;
-    bottom: max(16px, env(safe-area-inset-bottom));
+    bottom: max(80px, calc(env(safe-area-inset-bottom) + 64px));
   }
   .support-options {
     top: auto;
     bottom: calc(100% + 10px);
+    max-height: calc(100dvh - 155px);
   }
 }
 @media (max-width: 1250px) {
