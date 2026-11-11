@@ -1,4 +1,4 @@
-@font-face {
+﻿@font-face {
   font-family: Manrope;
   src: url(assets/manrope-latin.woff2) format("woff2");
   font-weight: 200 800;
@@ -989,6 +989,8 @@ p {
   gap: 24px;
 }
 .pack-tile {
+  display: flex;
+  flex-direction: column;
   text-align: left;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -998,6 +1000,37 @@ p {
     border-color 0.2s,
     transform 0.2s;
   min-width: 0;
+}
+.pack-main {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  flex: 1;
+}
+.pack-count {
+  min-width: 0;
+}
+.pack-count small {
+  display: block;
+  font-size: inherit;
+  margin-top: 3px;
+}
+.pack-rules-link {
+  align-self: flex-end;
+  margin-left: auto;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 8px 0 8px 8px;
+  flex-shrink: 0;
+}
+.pack-rules-link:hover {
+  color: var(--ink);
+}
+.pack-main:focus-visible,
+.pack-rules-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
 }
 .pack-tile:hover {
   border-color: #9571b2;

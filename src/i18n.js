@@ -1,5 +1,17 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Прочитати правила", "Read rules"],
+  ["карт", "cards"],
+  ["за правилами", "in rulebook"],
+  ["оновлення", "update cards"],
+  ["ринкових", "market"],
+  ["додаткових", "extra"],
+  ["Правила цієї колоди", "Rules for this deck"],
+  ["Переглянути карти колоди", "View this deck’s cards"],
+  [
+    "Окремого документа з правилами цієї колоди в наданих матеріалах немає. Ефекти та умови зазначені на самих картах.",
+    "The supplied materials do not include a separate rule sheet for this deck. Effects and conditions are printed on the cards themselves.",
+  ],
   [
     "Не вдалося завантажити оригінальний шрифт карти. Оновіть сторінку перед експортом.",
     "The original card font could not be loaded. Reload the page before exporting.",

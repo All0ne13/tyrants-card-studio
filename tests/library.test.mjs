@@ -7,6 +7,8 @@ import {
   ruleDocuments,
   matchesPack,
   supportURL,
+  deckComposition,
+  packRulesURL,
 } from "../src/library.js";
 import { libraryResults, rulesView } from "../src/library-view.js";
 import { setLocale, t } from "../src/i18n.js";
@@ -98,4 +100,45 @@ test("support destination stays hidden until a real HTTPS URL is configured", ()
     supportURL({ supportUrl: "https://ko-fi.com/example" }),
     "https://ko-fi.com/example",
   );
+});
+
+test("deck totals include repeated copies and distinguish supporting cards", () => {
+  const expected = {
+    faerie: 40,
+    mercenaries: 40,
+    siege: 40,
+    ooze: 41,
+    wizards: 48,
+    jaezred: 48,
+    delver: 94,
+    cohort: 10,
+    svirfneblin: 18,
+  };
+  for (const pack of library.filter((p) => p.category === "decks")) {
+    const composition = deckComposition(pack);
+    assert.equal(composition.total, expected[pack.id], pack.id);
+    assert.equal(composition.market + composition.extra, composition.total);
+  }
+  assert.equal(
+    deckComposition(library.find((p) => p.id === "delver")).conflict,
+    true,
+  );
+  assert.equal(deckComposition(library.find((p) => p.id === "houses")), null);
+});
+
+test("every deck has a separate, working rules destination in both locales", () => {
+  for (const language of ["en", "uk"]) {
+    setLocale(language);
+    const tiles = libraryResults(library, "decks", "");
+    assert.doesNotMatch(tiles, /designs|дизайнів|<button/);
+    for (const pack of library.filter((p) => p.category === "decks")) {
+      const href = packRulesURL(pack);
+      assert.ok(tiles.includes(`href="${href}"`), pack.id);
+      const reader = rulesView(library, href.slice("#rules/".length));
+      assert.match(reader, /rules-heading/);
+      assert.ok(reader.includes(pack.title.split(" ")[0]), pack.id);
+      assert.doesNotMatch(reader, /Rules not found|Правила не знайдено/);
+    }
+  }
+  setLocale("en");
 });

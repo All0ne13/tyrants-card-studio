@@ -10,6 +10,38 @@ export const CARD_KINDS = new Set([
 export function assets(pack) {
   return [...pack.cards, ...pack.pages];
 }
+// Count physical copies, not unique artwork, backs or printable PDF pages.
+export function deckComposition(pack) {
+  if (pack.category !== "decks") return null;
+  if (pack.id === "cohort")
+    // Cohort Rules and Playtest Cards v1.3, p. 1: 10 Cohort Minion cards.
+    return { total: 10, market: 0, extra: 10, source: "rules" };
+  if (pack.id === "svirfneblin")
+    // Two supplied update fronts, nine cards each; the reverse sheet is excluded.
+    return { total: 18, market: 0, extra: 18, source: "update-sheets" };
+  if (pack.id === "delver")
+    // Component Overview: 40 market + 30 treasure + 24 stalker cards.
+    // The supplied market artwork sums to 41 copies; keep that discrepancy
+    // visible rather than silently removing a design or claiming a verified 94.
+    return {
+      total: 94,
+      market: 40,
+      extra: 54,
+      source: "rulebook",
+      conflict: true,
+    };
+  const cards = pack.cards.filter((c) => CARD_KINDS.has(c.kind));
+  const market = cards
+    .filter((c) => c.kind === "market")
+    .reduce((sum, c) => sum + (c.copies ?? 1), 0);
+  const extra = cards
+    .filter((c) => c.kind !== "market")
+    .reduce((sum, c) => sum + (c.copies ?? 1), 0);
+  return { total: market + extra, market, extra, source: "card-copies" };
+}
+export function packRulesURL(pack) {
+  return "#rules/" + (pack.rulesDocuments?.[0]?.id || pack.id + "-rules");
+}
 export function matchesPack(pack, filter, search = "") {
   const items = assets(pack);
   const included =
