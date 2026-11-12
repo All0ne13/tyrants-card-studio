@@ -24,7 +24,8 @@ try {
   assert.equal(await page.locator("html").getAttribute("lang"), "en");
   assert.match(await page.locator(".brand").innerText(), /Card Builder/);
   const siteConfig = await (await page.request.get(base + "site-config.json")).json();
-  assert.equal(await page.locator(".footer-support").count(), siteConfig.supportUrl ? 1 : 0);
+  assert.equal(await page.locator(".footer-support").count(), 0);
+  assert.equal(await page.locator("#support-menu").count(), siteConfig.supportUrl ? 1 : 0);
   // UI text must never overwrite user-authored content, even if it matches a label.
   await page.locator('[data-key="name"]').fill("Назва");
   await page.locator('[data-key="effect"]').fill("Власний текст [influence]");

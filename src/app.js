@@ -63,7 +63,6 @@ let state = { cards: [blankCard()], active: 0 },
   drawVersion = 0,
   timer;
 let db;
-let footerSupportObserver;
 function toast(text, bad = false) {
   const n = $("#toast");
   n.textContent = t(text);
@@ -129,13 +128,7 @@ function header(route) {
   return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button>${supportMenu()}</div></header>`;
 }
 function footer() {
-  const mono = supportURL(siteConfig);
-  const address = /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(
-    siteConfig.supportUsdtTrc20 || "",
-  )
-    ? siteConfig.supportUsdtTrc20
-    : "";
-  return `<footer class="studio-footer">${mono || address ? `<section class="footer-support" aria-labelledby="footer-support-title"><div class="footer-support-copy"><span class="footer-heart">${icon("heart", 26)}</span><div><h2 id="footer-support-title">Подобається майстерня?</h2><p>Якщо майстерня стала в пригоді, можна підтримати її розвиток.</p></div></div><div class="footer-support-actions">${mono ? `<a class="button primary" href="${e(mono)}" target="_blank" rel="noopener noreferrer">Підтримати через Monobank</a>` : ""}${address ? `<details class="footer-usdt"><summary class="button ghost">USDT <small>TRC20</small></summary><div class="footer-wallet"><label for="footer-support-address">Адреса USDT у мережі TRC20</label><input id="footer-support-address" value="${e(address)}" readonly spellcheck="false"><button class="button ghost small" id="footer-copy-support" type="button">Копіювати адресу</button><span id="footer-support-status" role="status" aria-live="polite"></span></div></details>` : ""}</div></section>` : ""}<div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span>63,5 × 88 мм</span></div></footer>`;
+  return `<footer class="studio-footer"><div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span>63,5 × 88 мм</span></div></footer>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
@@ -304,17 +297,6 @@ function render() {
     });
 }
 function bind() {
-  footerSupportObserver?.disconnect();
-  const footerSupport = $(".footer-support"),
-    floatingSupport = $("#support-menu");
-  if (footerSupport && floatingSupport) {
-    footerSupportObserver = new IntersectionObserver(([entry]) => {
-      floatingSupport.classList.toggle("over-footer", entry.isIntersecting);
-      if (entry.isIntersecting && matchMedia("(max-width: 1250px)").matches)
-        floatingSupport.open = false;
-    });
-    footerSupportObserver.observe(footerSupport);
-  }
   const copySupport = $("#copy-support-address");
   if (copySupport)
     copySupport.onclick = async () => {
@@ -332,21 +314,6 @@ function bind() {
     };
   if ($("#support-address"))
     $("#support-address").onclick = (ev) => ev.target.select();
-  if ($("#footer-copy-support"))
-    $("#footer-copy-support").onclick = async () => {
-      const input = $("#footer-support-address"),
-        status = $("#footer-support-status");
-      try {
-        await navigator.clipboard.writeText(input.value);
-        status.textContent = t("Адресу скопійовано");
-      } catch {
-        input.focus();
-        input.select();
-        status.textContent = t("Виділіть адресу та скопіюйте її вручну.");
-      }
-    };
-  if ($("#footer-support-address"))
-    $("#footer-support-address").onclick = (ev) => ev.target.select();
   if ($("#locale-switch"))
     $("#locale-switch").onchange = async (ev) => {
       setLocale(ev.target.value);
