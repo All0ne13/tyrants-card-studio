@@ -181,7 +181,9 @@ def curate():
     (DIST / 'library.json').write_text(json.dumps(library, ensure_ascii=False), encoding='utf-8')
     from runpy import run_path
     run_path(str(APP / 'scripts/prepare-player-boards.py'))['prepare']()
-    print('Curated library:', len(library), 'packs,', sum(len(p['rulesDocuments']) for p in library), 'actual rule documents.')
+    run_path(str(APP / 'scripts/prepare-deck-guides.py'))['prepare']()
+    prepared = json.loads((DIST / 'library.json').read_text('utf-8'))
+    print('Curated library:', len(prepared), 'packs,', sum(len(p['rulesDocuments']) for p in prepared), 'rule documents and references.')
 
 
 if __name__ == '__main__':

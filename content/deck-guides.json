@@ -1,0 +1,93 @@
+[
+  {
+    "pack": "faerie",
+    "title": "Faerie",
+    "edition": "Faerie 2.0 • Deck reference",
+    "authorUrl": "https://boardgamegeek.com/thread/3430582",
+    "sourceNote": "Based on the supplied Faerie 2.0 cards. This is a studio reference, not an original author rule sheet.",
+    "sections": [
+      {
+        "heading": "Prepare the market",
+        "text": "Use all 40 physical Faerie cards, including repeated copies. Combine this half-deck with another compatible 40-card half-deck and use the normal base-game market setup. Keep your starting deck and the permanent supply separate."
+      },
+      {
+        "heading": "Choices and costs",
+        "text": "When a card says Choose one, select one listed option. A triangle separates an action or cost from its result: complete the required part before receiving the benefit. Check the exact target and quantity on the card."
+      },
+      {
+        "heading": "Example: Gremlin",
+        "text": "Its first option requires you to discard a card from your hand to gain two influence. Its second option requires you to devour Gremlin itself to gain three influence. Devouring is different from discarding: the devoured card is removed from the game and does not return when your discard pile is shuffled."
+      },
+      {
+        "heading": "Example: Tasha, the Demonologist",
+        "text": "Choose between four power; recruiting a market card of the Ambition aspect or Demon type costing five or less for free; or recruiting Graz'zt for free. These are alternatives, not three effects gained together. The special recruitment options still require the named or qualifying card to be available."
+      },
+      {
+        "heading": "During play",
+        "text": "Resolve deployment, returning troops or spies, recruitment and promotion using the base-game rules unless the played card explicitly changes them. Distinguish a card's aspect from its creature type when checking a condition. The italic flavour text is not an effect. Use the current printed card text for individual exceptions."
+      }
+    ]
+  },
+  {
+    "pack": "siege",
+    "title": "Siege",
+    "edition": "Siege half-deck • Deck reference",
+    "authorUrl": "https://boardgamegeek.com/thread/2296676",
+    "sourceNote": "Based on the supplied Siege cards and the author's introduction. This is a studio reference, not an original author rule sheet.",
+    "sections": [
+      {
+        "heading": "Prepare the market",
+        "text": "Use all 40 physical Siege cards, including duplicates, together with another compatible 40-card half-deck. Follow the normal setup for the market, starting decks and permanent supply. Siege is a market half-deck, not a separate map or game mode."
+      },
+      {
+        "heading": "What changes",
+        "text": "The author designed Siege around varied card interactions and alternative playstyles, with relatively limited resource generation. Its individual card effects supply the exceptions to normal play; there is no separate siege phase to introduce."
+      },
+      {
+        "heading": "Example: Avatar of Lolth",
+        "text": "Choose one option. Either place a spy and then draw a card, or return one of your spies to place another played card, or a card from your discard pile, on top of your deck. For the second option, returning your spy is the requirement before you receive the effect."
+      },
+      {
+        "heading": "Example: Relentless Siege",
+        "text": "Gain the three influence shown on the card. For the rest of that turn, treat other players' troops as white troops as instructed. This is a temporary effect: it ends with the turn and does not permanently change ownership of those troops."
+      },
+      {
+        "heading": "Check each effect",
+        "text": "Read whether an effect targets your troop, an enemy troop, a white troop or a spy. Do not treat these as interchangeable unless the card says so. Follow any printed order of actions and pay a requirement before the effect after its triangle. Normal presence rules and base-game action costs continue to apply unless explicitly overridden."
+      },
+      {
+        "heading": "After the turn",
+        "text": "Complete the base game's normal end-of-turn procedure. Do not carry temporary permissions or unused turn resources into the next player's turn. Keep the played card available to read whenever a conditional effect needs clarification."
+      }
+    ]
+  },
+  {
+    "pack": "svirfneblin",
+    "title": "Svirfneblin & Kuo-Toa",
+    "edition": "Betrayal & Persistence • Version 1.1 reference",
+    "authorUrl": "https://boardgamegeek.com/thread/3450358",
+    "sourceNote": "Studio summary of the author's expansion overview and supplied v1.1 update pack; individual card wording takes priority.",
+    "sections": [
+      {
+        "heading": "Two separate half-decks",
+        "text": "The complete expansion contains two 40-card half-decks. Each can be paired with another compatible half-deck using the usual market setup."
+      },
+      {
+        "heading": "Svirfneblin: Betrayal",
+        "text": "Effects interact with inner circles: promotion may benefit another player, while other abilities return or play promoted cards. Read the required owner, destination and cost carefully. Trading inner-circle points for a powerful immediate effect is part of this deck's design."
+      },
+      {
+        "heading": "Kuo-Toa: Persistence",
+        "text": "Certain cards remain in play across turns, following their printed effects. Reshuffling your deck ends their persistence; some opposing effects can force a reshuffle or remove a persistent card sooner. Resolve the exact timing on each card."
+      },
+      {
+        "heading": "Combining decks",
+        "text": "The author recommends removing Blue Dragon when pairing Dragons with Betrayal. Aberration discard effects can be especially punishing alongside Betrayal. Learn each half-deck separately before combining the two new halves."
+      },
+      {
+        "heading": "What this library pack contains",
+        "text": "The supplied v1.1 update sheets contain 18 replacement cards and card backs. They update an existing set; they are not the complete 80-card expansion. Replace the corresponding older cards rather than adding extra copies."
+      }
+    ]
+  }
+]

@@ -9,7 +9,6 @@ import {
   supportURL,
   deckComposition,
   packRulesURL,
-  legacyRulesDestination,
 } from "../src/library.js";
 import { libraryResults, rulesView } from "../src/library-view.js";
 import { setLocale, t } from "../src/i18n.js";
@@ -41,12 +40,8 @@ test("card backs exclude front sheets and round token reverses", () => {
 });
 test("rules contain actual documents and references, never arbitrary print files", () => {
   const docs = ruleDocuments(library);
-  assert.equal(docs.length, 9);
-  assert.ok(
-    !docs.some(({ pack }) =>
-      ["faerie", "siege", "houses", "svirfneblin"].includes(pack.id),
-    ),
-  );
+  assert.equal(docs.length, 12);
+  assert.ok(!docs.some(({ pack }) => pack.id === "houses"));
   assert.ok(
     docs.some(
       ({ doc }) => doc.id === "base-game-rules" && doc.format === "pdf",
@@ -135,12 +130,10 @@ test("every deck has a separate, working rules destination in both locales", () 
     for (const pack of library.filter((p) => p.category === "decks")) {
       const href = packRulesURL(pack);
       assert.ok(tiles.includes(`href="${href}"`), pack.id);
-      if (href.startsWith("https://")) {
-        assert.equal(new URL(href).hostname, "boardgamegeek.com");
-        assert.match(href, /\/thread\/\d+$/);
-        assert.equal(legacyRulesDestination(pack.id + "-rules"), href);
-        continue;
-      }
+      assert.ok(
+        href.startsWith("#rules/"),
+        "Read rules must stay on the site: " + pack.id,
+      );
       const reader = rulesView(library, href.slice("#rules/".length));
       assert.match(reader, /rules-heading/);
       assert.ok(reader.includes(pack.title.split(" ")[0]), pack.id);

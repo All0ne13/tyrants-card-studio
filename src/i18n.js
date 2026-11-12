@@ -1,5 +1,11 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Завантажити пам’ятку PDF", "Download guide PDF"],
+  ["Джерело автора", "Author source"],
+  [
+    "Пам’ятка за матеріалами автора та текстами карт",
+    "Reference based on author notes and card text",
+  ],
   ["Правила від автора на BoardGameGeek", "Author’s rules on BoardGameGeek"],
   ["Відкрити оригінал", "Open original"],
   ["Подобається майстерня?", "Enjoying the studio?"],

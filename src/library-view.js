@@ -68,23 +68,9 @@ export function assetTile(asset, pack, showPack = false) {
 function ruleTile({ pack, doc }) {
   return `<a class="rule-tile" href="#rules/${e(doc.id)}"><span class="rule-book">${book}</span><div><span class="eyebrow">${t(pack.id === "base-game" ? "Базова гра" : "ФАНАТСЬКЕ ДОПОВНЕННЯ")}</span><h3 data-source-text>${e(doc.title)}</h3><p>${t("Мова джерела: англійська")}</p><span class="rule-read">${t("Читати правила")} <span aria-hidden="true">›</span></span></div></a>`;
 }
-function authorRuleTile(pack) {
-  const url = packRulesURL(pack);
-  return `<a class="rule-tile author-rules" href="${e(url)}" target="_blank" rel="noopener noreferrer"><span class="rule-book">${book}</span><div><span class="eyebrow">${t("ФАНАТСЬКЕ ДОПОВНЕННЯ")}</span><h3 data-source-text>${e(pack.title)}</h3><p>${t("Правила від автора на BoardGameGeek")}</p><span class="rule-read">${t("Читати правила")} <span aria-hidden="true">›</span></span></div></a>`;
-}
 export function libraryResults(library, filter, search) {
   if (filter === "rules")
-    return `<div class="rule-grid">${
-      ruleDocuments(library, search).map(ruleTile).join("") +
-        library
-          .filter(
-            (pack) =>
-              packRulesURL(pack).startsWith("https://") &&
-              matchesPack(pack, "all", search),
-          )
-          .map(authorRuleTile)
-          .join("") || empty()
-    }</div>`;
+    return `<div class="rule-grid">${ruleDocuments(library, search).map(ruleTile).join("") || empty()}</div>`;
   if (filter === "back")
     return `<div class="asset-grid back-grid">${
       backs(library, search)
@@ -187,6 +173,10 @@ export function rulesView(library, id, pageNumber = 0) {
     Math.min(pageNumber, (doc.pages?.length || 1) - 1),
   );
   const downloadLabel =
-    doc.format === "pdf" ? "Відкрити PDF" : "Завантажити оригінал";
+    doc.sourceKind === "guide"
+      ? "Завантажити пам’ятку PDF"
+      : doc.format === "pdf"
+        ? "Відкрити PDF"
+        : "Завантажити оригінал";
   return `<main class="content-page rules-page"><a class="text-button back-library" href="#library">← ${t("Уся бібліотека")}</a><header class="rules-heading"><div class="eyebrow">Правила та інструкції</div><h1 data-source-text>${e(doc.title)}</h1><p class="source-language">Мова джерела: англійська</p><div class="reader-actions"><a class="button primary" href="${e(doc.sourceUrl)}" target="_blank" rel="noopener">${t(downloadLabel)}</a><button class="button ghost" data-rule-pack="${e(pack.id)}">До матеріалів колоди</button></div></header>${doc.format === "article" ? `<div class="reader-layout">${headings.length ? `<aside class="rules-toc"><h2>Зміст</h2>${headings.map((h) => `<button data-rule-section="${h.index}" data-source-text>${e(h.text)}</button>`).join("")}</aside>` : ""}<article class="rules-article" lang="en" data-source-text>${articleHTML(doc.blocks || [])}</article></div>` : doc.format === "pages" ? `<section class="page-reader"><div class="reader-pagination"><button class="button ghost small" data-rule-page="${selected - 1}" ${selected === 0 ? "disabled" : ""}>Попередня сторінка</button><span>${t("Сторінка")} ${selected + 1} / ${doc.pages.length}</span><button class="button ghost small" data-rule-page="${selected + 1}" ${selected === doc.pages.length - 1 ? "disabled" : ""}>Наступна сторінка</button></div><a class="rule-page-image" href="${e(doc.pages[selected])}" target="_blank" rel="noopener" aria-label="Відкрити на весь екран"><img src="${e(doc.pages[selected])}" alt="${e(doc.title)} — ${selected + 1}" width="1400"></a></section>` : `<section class="pdf-reader"><p>Оригінальний документ відкриється в новій вкладці.</p><object data="${e(doc.sourceUrl)}#view=FitH" type="application/pdf" aria-label="${e(doc.title)}"><a class="button primary" href="${e(doc.sourceUrl)}" target="_blank" rel="noopener">Відкрити PDF</a></object></section>`}</main>`;
 }
