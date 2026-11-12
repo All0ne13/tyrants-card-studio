@@ -2093,12 +2093,12 @@ p {
   .support-menu {
     position: fixed;
     right: 16px;
-    bottom: max(80px, calc(env(safe-area-inset-bottom) + 64px));
+    bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
   }
   .support-options {
     top: auto;
     bottom: calc(100% + 10px);
-    max-height: calc(100dvh - 155px);
+    max-height: calc(100dvh - 90px);
   }
 }
 @media (max-width: 1250px) {
@@ -2286,5 +2286,268 @@ p {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Support belongs to the studio, with the same palette and type hierarchy. */
+.studio-footer {
+  margin-top: 44px;
+  border-top: 1px solid var(--line);
+}
+.footer-support {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 38px 30px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+.footer-support-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  max-width: 600px;
+}
+.footer-heart {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  height: 48px;
+  color: var(--accent);
+  background: #251b31;
+  border: 1px solid #51405f;
+  border-radius: 50%;
+}
+.footer-support h2 {
+  font-size: clamp(25px, 2.3vw, 32px);
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+.footer-support p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+.footer-support-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.footer-usdt {
+  width: 150px;
+}
+.footer-usdt summary {
+  cursor: pointer;
+  list-style: none;
+  justify-content: center;
+  gap: 10px;
+}
+.footer-usdt summary::-webkit-details-marker {
+  display: none;
+}
+.footer-usdt small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.footer-usdt[open] {
+  width: min(320px, 100%);
+}
+.footer-wallet {
+  margin-top: 12px;
+  padding: 16px;
+  background: #1c1524;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.footer-wallet label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.footer-wallet input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 7px;
+  margin: 10px 0;
+  font-family: monospace;
+  font-size: 11px;
+}
+.footer-wallet button {
+  width: 100%;
+}
+#footer-support-status {
+  display: block;
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 8px;
+}
+.studio-footer .app-footer {
+  margin-top: 0;
+  justify-content: space-between;
+}
+
+/* Large boards use their full-resolution file and a scrollable zoom surface. */
+.asset-dialog.wide-asset {
+  width: calc(100% - 48px);
+  max-width: 1600px;
+  padding: 24px;
+}
+.asset-dialog.wide-asset[open] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+.wide-asset .asset-large {
+  padding-top: 26px;
+  min-width: 0;
+}
+.wide-asset .asset-stage {
+  height: 64dvh;
+  min-height: 180px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #0c0910;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: zoom-in;
+}
+.wide-asset .asset-stage.zoomed {
+  cursor: grab;
+}
+.wide-asset .asset-stage.zoomed:active {
+  cursor: grabbing;
+}
+.wide-asset .asset-stage img {
+  display: block;
+  margin: auto;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  user-select: none;
+}
+.asset-zoom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 12px;
+}
+.asset-zoom .zoom-range {
+  max-width: 180px;
+  min-width: 50px;
+  padding: 0;
+  height: auto;
+  accent-color: var(--accent);
+}
+.asset-zoom .zoom-level {
+  min-width: 44px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.wide-asset .asset-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+.wide-asset .asset-detail h2 {
+  font-size: 28px;
+  margin: 8px 0;
+}
+.wide-asset .asset-detail p {
+  margin: 0;
+  font-size: 12px;
+}
+.wide-asset .asset-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+.asset-dialog .dialog-close {
+  z-index: 2;
+  background: #1a1422;
+}
+@media (max-width: 1000px) {
+  .footer-support {
+    flex-direction: column;
+  }
+  .footer-support-actions {
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    width: 100%;
+  }
+  .wide-asset .asset-detail {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+@media (max-width: 1250px) {
+  .support-menu.over-footer {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .footer-support {
+    padding: 28px 20px;
+    gap: 24px;
+  }
+  .footer-support-copy {
+    gap: 12px;
+  }
+  .footer-heart {
+    flex-basis: 40px;
+    height: 40px;
+  }
+  .footer-support-actions > a {
+    width: 100%;
+    justify-content: center;
+  }
+  .footer-usdt,
+  .footer-usdt[open] {
+    width: 100%;
+  }
+  .footer-usdt summary {
+    min-height: 46px;
+    width: 100%;
+  }
+  .studio-footer .app-footer {
+    padding-bottom: 80px;
+  }
+  .asset-dialog.wide-asset {
+    width: calc(100% - 16px);
+    max-height: 96dvh;
+    padding: 12px;
+  }
+  .wide-asset .asset-stage {
+    height: 52dvh;
+  }
+  .wide-asset .asset-stage:not(.zoomed) {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: var(--asset-ratio, 2.45);
+  }
+  .asset-zoom {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .asset-zoom .zoom-range {
+    flex: 1;
+    max-width: 160px;
+  }
+  .asset-zoom .zoom-fit {
+    min-height: 40px;
+    width: 100%;
+  }
+  .wide-asset .asset-actions {
+    width: 100%;
+  }
+  .wide-asset .asset-actions a {
+    width: 100%;
+    justify-content: center;
   }
 }

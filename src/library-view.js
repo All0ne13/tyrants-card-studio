@@ -68,9 +68,23 @@ export function assetTile(asset, pack, showPack = false) {
 function ruleTile({ pack, doc }) {
   return `<a class="rule-tile" href="#rules/${e(doc.id)}"><span class="rule-book">${book}</span><div><span class="eyebrow">${t(pack.id === "base-game" ? "Базова гра" : "ФАНАТСЬКЕ ДОПОВНЕННЯ")}</span><h3 data-source-text>${e(doc.title)}</h3><p>${t("Мова джерела: англійська")}</p><span class="rule-read">${t("Читати правила")} <span aria-hidden="true">›</span></span></div></a>`;
 }
+function authorRuleTile(pack) {
+  const url = packRulesURL(pack);
+  return `<a class="rule-tile author-rules" href="${e(url)}" target="_blank" rel="noopener noreferrer"><span class="rule-book">${book}</span><div><span class="eyebrow">${t("ФАНАТСЬКЕ ДОПОВНЕННЯ")}</span><h3 data-source-text>${e(pack.title)}</h3><p>${t("Правила від автора на BoardGameGeek")}</p><span class="rule-read">${t("Читати правила")} <span aria-hidden="true">›</span></span></div></a>`;
+}
 export function libraryResults(library, filter, search) {
   if (filter === "rules")
-    return `<div class="rule-grid">${ruleDocuments(library, search).map(ruleTile).join("") || empty()}</div>`;
+    return `<div class="rule-grid">${
+      ruleDocuments(library, search).map(ruleTile).join("") +
+        library
+          .filter(
+            (pack) =>
+              packRulesURL(pack).startsWith("https://") &&
+              matchesPack(pack, "all", search),
+          )
+          .map(authorRuleTile)
+          .join("") || empty()
+    }</div>`;
   if (filter === "back")
     return `<div class="asset-grid back-grid">${
       backs(library, search)

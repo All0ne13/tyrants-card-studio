@@ -1,5 +1,18 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Правила від автора на BoardGameGeek", "Author’s rules on BoardGameGeek"],
+  ["Відкрити оригінал", "Open original"],
+  ["Подобається майстерня?", "Enjoying the studio?"],
+  [
+    "Якщо майстерня стала в пригоді, можна підтримати її розвиток.",
+    "If the studio has been useful, you can help support its development.",
+  ],
+  ["Підтримати через Monobank", "Support via Monobank"],
+  ["Зменшити", "Zoom out"],
+  ["Збільшити", "Zoom in"],
+  ["Вписати у вікно", "Fit to window"],
+  ["Відкрити повний розмір", "Open full resolution"],
+  ["Масштаб зображення", "Image zoom"],
   ["Підтримати проєкт", "Support the project"],
   [
     "Дякую за підтримку майстерні карт!",

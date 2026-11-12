@@ -12,6 +12,7 @@ import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
 import { locale, setLocale, t, localizeUI } from "./i18n.js";
 import { supportURL, legacyRulesDestination } from "./library.js";
+import { showAsset } from "./asset-viewer.js";
 import {
   libraryView as renderLibrary,
   libraryResults,
@@ -62,6 +63,7 @@ let state = { cards: [blankCard()], active: 0 },
   drawVersion = 0,
   timer;
 let db;
+let footerSupportObserver;
 function toast(text, bad = false) {
   const n = $("#toast");
   n.textContent = t(text);
@@ -125,6 +127,15 @@ function supportMenu() {
 }
 function header(route) {
   return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button>${supportMenu()}</div></header>`;
+}
+function footer() {
+  const mono = supportURL(siteConfig);
+  const address = /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(
+    siteConfig.supportUsdtTrc20 || "",
+  )
+    ? siteConfig.supportUsdtTrc20
+    : "";
+  return `<footer class="studio-footer">${mono || address ? `<section class="footer-support" aria-labelledby="footer-support-title"><div class="footer-support-copy"><span class="footer-heart">${icon("heart", 26)}</span><div><h2 id="footer-support-title">Подобається майстерня?</h2><p>Якщо майстерня стала в пригоді, можна підтримати її розвиток.</p></div></div><div class="footer-support-actions">${mono ? `<a class="button primary" href="${e(mono)}" target="_blank" rel="noopener noreferrer">Підтримати через Monobank</a>` : ""}${address ? `<details class="footer-usdt"><summary class="button ghost">USDT <small>TRC20</small></summary><div class="footer-wallet"><label for="footer-support-address">Адреса USDT у мережі TRC20</label><input id="footer-support-address" value="${e(address)}" readonly spellcheck="false"><button class="button ghost small" id="footer-copy-support" type="button">Копіювати адресу</button><span id="footer-support-status" role="status" aria-live="polite"></span></div></details>` : ""}</div></section>` : ""}<div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span>63,5 × 88 мм</span></div></footer>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
@@ -243,28 +254,19 @@ function libraryView() {
 function openAsset(id, pack) {
   const p = library.find((p) => p.id === pack),
     a = [...p.cards, ...p.pages].find((a) => a.id === id);
-  const d = document.createElement("dialog");
-  d.className = "asset-dialog";
-  d.innerHTML = `<button class="icon-button dialog-close" aria-label="Закрити">${icon("close")}</button><div class="asset-large"><img src="${e(a.image)}" alt="${e(a.name)}"></div><div class="asset-detail"><div class="eyebrow">${e(p.title)}</div><h2 data-source-text>${e(a.name)}</h2><p class="muted">${e(p.subtitle)}</p><div class="asset-actions"><a class="button primary" href="${e(a.image)}" download="${e(safeName(a.name))}.${a.image.endsWith(".png") ? "png" : "webp"}">${icon("download")} Зберегти зображення</a>${a.sourceFile ? `<a class="button ghost" href="${e(a.sourceFile)}" download>${t("Завантажити оригінал")} · ${a.page}</a>` : ""}${a.kind === "back" ? '<button class="button ghost" id="use-back">Використати як сорочку</button>' : ""}</div></div>`;
-  localizeUI(d);
-  document.body.append(d);
-  d.showModal();
-  d.addEventListener("close", () => d.remove());
-  $(".dialog-close", d).onclick = () => d.close();
-  d.addEventListener("click", (ev) => {
-    if (ev.target === d) d.close();
-  });
-  if ($("#use-back", d))
-    $("#use-back", d).onclick = async () => {
+  showAsset(p, a, {
+    icon,
+    escape: e,
+    onUseBack: async () => {
       card().backImage = await blobData(await (await fetch(a.image)).blob());
       card().backMode = "image";
       tab = "back";
       side = "back";
-      d.close();
       location.hash = "editor";
       await persist();
       render();
-    };
+    },
+  });
 }
 function route() {
   return (location.hash.slice(1) || "editor").split("/")[0];
@@ -287,7 +289,6 @@ function render() {
     locale === "en"
       ? "Create print-ready Tyrants of the Underdark cards. Edit artwork, text and symbols, explore fan expansions and read game rules."
       : "Створюйте карти Тиранів Підземелля для друку. Редагуйте зображення, текст і символи, переглядайте доповнення та читайте правила.";
-  const support = supportURL(siteConfig);
   $("#app").innerHTML =
     header(r) +
     (r === "library"
@@ -297,7 +298,7 @@ function render() {
         : r === "projects"
           ? projects()
           : editor()) +
-    `<footer class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span>${support ? `<a class="support-link" href="${e(support)}" target="_blank" rel="noopener">${icon("heart", 16)} Підтримати проєкт</a>` : ""}<span>63,5 × 88 мм</span></footer>`;
+    footer();
   localizeUI($("#app"));
   bind();
   if (r === "editor") preview();
@@ -310,6 +311,17 @@ function render() {
     });
 }
 function bind() {
+  footerSupportObserver?.disconnect();
+  const footerSupport = $(".footer-support"),
+    floatingSupport = $("#support-menu");
+  if (footerSupport && floatingSupport) {
+    footerSupportObserver = new IntersectionObserver(([entry]) => {
+      floatingSupport.classList.toggle("over-footer", entry.isIntersecting);
+      if (entry.isIntersecting && matchMedia("(max-width: 1250px)").matches)
+        floatingSupport.open = false;
+    });
+    footerSupportObserver.observe(footerSupport);
+  }
   const copySupport = $("#copy-support-address");
   if (copySupport)
     copySupport.onclick = async () => {
@@ -327,6 +339,21 @@ function bind() {
     };
   if ($("#support-address"))
     $("#support-address").onclick = (ev) => ev.target.select();
+  if ($("#footer-copy-support"))
+    $("#footer-copy-support").onclick = async () => {
+      const input = $("#footer-support-address"),
+        status = $("#footer-support-status");
+      try {
+        await navigator.clipboard.writeText(input.value);
+        status.textContent = t("Адресу скопійовано");
+      } catch {
+        input.focus();
+        input.select();
+        status.textContent = t("Виділіть адресу та скопіюйте її вручну.");
+      }
+    };
+  if ($("#footer-support-address"))
+    $("#footer-support-address").onclick = (ev) => ev.target.select();
   if ($("#locale-switch"))
     $("#locale-switch").onchange = async (ev) => {
       setLocale(ev.target.value);
@@ -738,12 +765,14 @@ try {
   }
 } catch {}
 try {
-  library = await (await fetch("library.json")).json();
+  library = await (await fetch("library.json", { cache: "no-store" })).json();
 } catch {
   toast("Бібліотека недоступна. Редактор працює незалежно.", true);
 }
 try {
-  siteConfig = await (await fetch("site-config.json")).json();
+  siteConfig = await (
+    await fetch("site-config.json", { cache: "no-store" })
+  ).json();
 } catch {}
 document.addEventListener("pointerdown", (event) => {
   const menu = $("#support-menu");
