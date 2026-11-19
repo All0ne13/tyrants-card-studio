@@ -1,5 +1,18 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Створити ще одну карту", "Create another card"],
+  ["Зберегти та додати до колоди", "Save and add to deck"],
+  ["Зберегти та повернутися до колоди", "Save and return to deck"],
+  ["Повернутися до колоди", "Back to deck"],
+  [
+    "Додавайте різні збережені карти або створюйте нові. Для кожної карти в колоді можна вказати кількість копій.",
+    "Add different saved cards or create new ones. Set the number of copies for each card in your deck.",
+  ],
+  [
+    "Поверніться до редагування заявки перед додаванням карт.",
+    "Return to editing the proposal before adding cards.",
+  ],
+
   ["Редагувати в конструкторі", "Edit in builder"],
   ["Вибрати з «Мої карти»", "Choose from My cards"],
   [

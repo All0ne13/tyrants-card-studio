@@ -22,6 +22,7 @@ import {
   captureSetupToken,
   submissionView,
   bindSubmission,
+  addCardToProposal,
   moderationView,
   bindModeration,
 } from "./community.js";
@@ -263,7 +264,8 @@ function panel() {
   return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна MINION</option><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Власний візерунок і напис</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : `<p><a class="text-button" href="assets/minion-back-print.png" download="MINION-63.5x88mm.png">Скачати PNG для друку</a></p><p><a class="text-button" href="assets/minion-back-source.png" download="MINION-source-822x1122.png">Оригінальне зображення</a></p>`}`;
 }
 function editor() {
-  return `<div class="editor-intro"><div><div class="eyebrow">ВАШ ДІМ. ВАШІ КАРТИ.</div><h1>Майстерня карт</h1><p>Ваші історії. Ваші правила. Справжня карта на виході.</p></div><button class="button ghost" id="new-card">${icon("plus")} Нова карта</button></div><div class="workspace"><aside class="editor-panel"><div class="panel-tabs" role="tablist">${[
+  const proposalMode = location.hash.split("/")[2];
+  return `<div class="editor-intro"><div><div class="eyebrow">ВАШ ДІМ. ВАШІ КАРТИ.</div><h1>Майстерня карт</h1><p>Ваші історії. Ваші правила. Справжня карта на виході.</p></div><div class="editor-create-actions">${location.hash.startsWith("#editor/proposal/") ? `<button class="button primary" id="save-proposal-card">${t(proposalMode === "new" ? "Зберегти та додати до колоди" : "Зберегти та повернутися до колоди")}</button><a class="text-button" href="#submit">${t("Повернутися до колоди")}</a>` : ""}<button class="button ghost" id="new-card">${icon("plus")} Нова карта</button></div></div><div class="workspace"><aside class="editor-panel"><div class="panel-tabs" role="tablist">${[
     ["text", "Текст"],
     ["art", "Ілюстрація"],
     ["icons", "Іконки"],
@@ -305,6 +307,16 @@ async function preview() {
   } catch (err) {
     toast(err.message, true);
   }
+}
+async function createCard(forProposal = false) {
+  state.cards.push(blankCard());
+  state.active = state.cards.length - 1;
+  side = "front";
+  tab = "text";
+  await persist();
+  const target = forProposal ? "#editor/proposal/new" : "#editor";
+  if (location.hash === target) render();
+  else location.hash = target;
 }
 function projects() {
   return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">МОЇ ПРОЄКТИ</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><div class="project-page-actions"><a class="button ghost" href="#submit">${t("Запропонувати колоду")}</a><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3 data-user-content>${e(c.name || t("Без назви"))}</h3><p data-user-content>${e(c.type || t("Власна карта"))} · ${t("63,5 × 88 мм")}</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
@@ -374,6 +386,7 @@ function bind() {
     render,
     toast,
     onCatalogChange: refreshCommunity,
+    createSource: () => createCard(true),
     editSource: (id, back) => {
       const index = state.cards.findIndex((c) => c.id === id);
       if (index < 0) return;
@@ -381,7 +394,7 @@ function bind() {
       tab = back ? "back" : "text";
       side = back ? "back" : "front";
       persist();
-      location.hash = "editor";
+      location.hash = "editor/proposal/edit";
     },
   });
   bindModeration({
@@ -680,14 +693,27 @@ function bind() {
       render();
     };
   if ($("#new-card"))
-    $("#new-card").onclick = () => {
-      state.cards.push(blankCard());
-      state.active = state.cards.length - 1;
-      side = "front";
-      tab = "text";
-      persist();
-      location.hash = "editor";
-      render();
+    $("#new-card").onclick = () =>
+      createCard(location.hash.startsWith("#editor/proposal/"));
+  if ($("#save-proposal-card"))
+    $("#save-proposal-card").onclick = async (event) => {
+      const button = event.currentTarget;
+      if (!card().name.trim()) {
+        toast("Додайте назву карти в конструкторі перед надсиланням.", true);
+        tab = "text";
+        render();
+        $('[data-key="name"]')?.focus();
+        return;
+      }
+      button.disabled = true;
+      try {
+        await persist();
+        if (location.hash.endsWith("/new")) await addCardToProposal(card());
+        location.hash = "submit";
+      } catch (err) {
+        toast(err.message, true);
+        button.disabled = false;
+      }
     };
   if ($("#duplicate"))
     $("#duplicate").onclick = () => {

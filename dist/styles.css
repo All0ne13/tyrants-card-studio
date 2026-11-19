@@ -2514,3 +2514,12 @@ p {
 .submission-card-name strong { font-size:14px; }
 .submission-card-name .text-button { align-self:flex-start; }
 .submission-source-card > strong { overflow-wrap:anywhere; font-size:14px; }
+
+/* Creating a new deck member never replaces an existing saved card. */
+.editor-create-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:12px; }
+.submission-card { grid-template-columns:60px minmax(0,1fr) 112px; }
+.submission-card-actions { display:grid; grid-template-columns:minmax(0,1fr) 32px; align-items:end; gap:8px; }
+.submission-card-actions input,.submission-card-actions .icon-button { height:40px; box-sizing:border-box; }
+.submission-card-actions .field { gap:8px; }
+@media(max-width:800px) { .submission-card { grid-template-columns:48px minmax(0,1fr) 98px; } .submission-card-actions { grid-template-columns:minmax(0,1fr) 28px; } }
+@media(max-width:600px) { .editor-create-actions { justify-content:flex-start; } .submission-picker-heading { align-items:flex-start; flex-wrap:wrap; } }

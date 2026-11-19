@@ -162,12 +162,12 @@ export function submissionView(cards) {
     draft.cards
       .map((c, i) => {
         const source = cards.find((source) => source.id === c.sourceId);
-        return `<article class="submission-card">${source ? `<canvas data-sub-preview="${e(source.id)}" aria-label="${e(source.name || t("Без назви"))}"></canvas>` : `<img src="${c.data}" alt="">`}<div class="submission-card-name"><strong data-user-content>${e(source?.name || c.name || t("Без назви"))}</strong>${source ? `<button type="button" class="text-button" data-edit-source="${e(source.id)}" ${locked ? "disabled" : ""}>${t("Редагувати в конструкторі")}</button>` : ""}</div><label class="field copies-field"><span>${t("Копії")}</span><input type="number" data-sub-copies="${i}" min="1" max="40" value="${c.copies}" required ${locked ? "disabled" : ""}></label><button type="button" class="icon-button" data-remove-sub-card="${i}" aria-label="${t("Прибрати")}" ${locked ? "disabled" : ""}>×</button></article>`;
+        return `<article class="submission-card">${source ? `<canvas data-sub-preview="${e(source.id)}" aria-label="${e(source.name || t("Без назви"))}"></canvas>` : `<img src="${c.data}" alt="">`}<div class="submission-card-name"><strong data-user-content>${e(source?.name || c.name || t("Без назви"))}</strong>${source ? `<button type="button" class="text-button" data-edit-source="${e(source.id)}" ${locked ? "disabled" : ""}>${t("Редагувати в конструкторі")}</button>` : ""}</div><div class="submission-card-actions"><label class="field copies-field"><span>${t("Копії")}</span><input type="number" data-sub-copies="${i}" min="1" max="40" value="${c.copies}" required ${locked ? "disabled" : ""}></label><button type="button" class="icon-button" data-remove-sub-card="${i}" aria-label="${t("Прибрати")}" ${locked ? "disabled" : ""}>×</button></div></article>`;
       })
       .join("") ||
     `<p class="empty-state">${t("Виберіть карти нижче, щоб зібрати колоду.")}</p>`
   }</div>
-  <div class="submission-picker-heading"><h3>${t("Вибрати з «Мої карти»")}</h3><a class="text-button" href="#editor">${t("Створити карту")}</a></div><p class="muted">${t("Назви та зображення беруться з ваших збережених карт автоматично.")}</p>
+  <div class="submission-picker-heading"><h3>${t("Вибрати з «Мої карти»")}</h3><button type="button" class="button ghost small" id="new-proposal-card" ${locked ? "disabled" : ""}>${t("Створити ще одну карту")}</button></div><p class="muted">${t("Додавайте різні збережені карти або створюйте нові. Для кожної карти в колоді можна вказати кількість копій.")}</p>
   <div class="submission-source-grid">${
     cards
       .filter((c) => !selected.has(c.id))
@@ -187,15 +187,33 @@ async function cardImage(card, back = false) {
     await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.96)),
   );
 }
+export async function addCardToProposal(source) {
+  if (draft.remote)
+    throw Error(t("Поверніться до редагування заявки перед додаванням карт."));
+  if (!source.name.trim())
+    throw Error(t("Додайте назву карти в конструкторі перед надсиланням."));
+  if (draft.cards.some((c) => c.sourceId === source.id)) return;
+  if (draft.cards.length >= 60)
+    throw Error(t("Можна додати щонайбільше 60 різних карт."));
+  draft.cards.push({
+    sourceId: source.id,
+    name: source.name,
+    copies: Math.max(1, Math.min(40, Number(source.copies) || 1)),
+    data: await cardImage(source),
+  });
+  await saveDraft();
+}
 export function bindSubmission({
   cards,
   render,
   toast,
   onCatalogChange,
   editSource,
+  createSource,
 }) {
   const form = document.querySelector("#submission-form");
   if (!form) return;
+  document.querySelector("#new-proposal-card").onclick = createSource;
   const status = (message, error = false) => {
     const n = document.querySelector("#submission-status");
     if (n) {
@@ -278,17 +296,9 @@ export function bindSubmission({
           return;
         }
         try {
-          if (draft.cards.length >= 60)
-            throw Error(t("Можна додати щонайбільше 60 різних карт."));
           busy = true;
           n.disabled = true;
-          draft.cards.push({
-            sourceId: source.id,
-            name: source.name,
-            copies: Math.max(1, Math.min(40, Number(source.copies) || 1)),
-            data: await cardImage(source),
-          });
-          await saveDraft();
+          await addCardToProposal(source);
         } catch (err) {
           toast(err.message, true);
         } finally {
