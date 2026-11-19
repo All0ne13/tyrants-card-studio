@@ -22,7 +22,9 @@ Drafts stay in the current browser. They are not synchronized across devices or 
 
 ## Community deck submissions
 
-**Propose a deck** is available in the library, My cards and the footer. Authors can select saved editor cards or upload complete PNG/JPEG/WebP card fronts, give the deck and each card a name, set copy counts, and add a back plus text/PDF rules. Up to 60 unique cards are supported per submission. Fronts are fitted to the standard 750 × 1040 canvas without cropping their text. Unsubmitted drafts stay in a separate browser database; submitted images and metadata are stored privately in Netlify Blobs.
+**Propose a deck** is available in the library, My cards and the footer. Authors choose cards they saved in the constructor, give the deck a name, and set copy counts. Card titles can be changed directly in the proposal and are also saved in My cards, including previously untitled cards. A saved card can be included only once; its copy count controls repeated copies. There is no separate card-image upload in this form.
+
+The shared back comes from the first selected card by default, or from another card chosen in My cards. **Edit card back** opens that exact card's Back editor. Text rules and an optional PDF can be added separately. Up to 60 unique cards are supported. Submission refreshes the fronts and selected back from the latest editor state before creating the private server copy. Existing unsent drafts and receipts remain available after upgrading, including any previously saved draft images. Unsubmitted drafts stay in a separate browser database; submitted images and metadata are stored privately in Netlify Blobs.
 
 The owner signs in at `#moderation` to review full-size cards and rules, add feedback, approve/publish, decline or unpublish a deck. Approval connects the same data to the existing library, card viewer, rules reader and A4 printing. Only approved decks appear in the public catalog. Authors can refresh their receipt to see the decision; receipt access stays in the browser where they submitted it. Declined submissions can be permanently deleted by the owner.
 

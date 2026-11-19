@@ -1,5 +1,6 @@
 import { t, localizeUI } from "./i18n.js";
 import { printable } from "./export.js";
+import { renderCard } from "./render.js";
 
 export const COMMUNITY_API = "/.netlify/functions/decks";
 const e = (value) =>
@@ -72,6 +73,7 @@ const emptyDraft = () => ({
   rights: false,
   cards: [],
   back: null,
+  backSourceId: "",
   rulesPDF: null,
   remote: null,
 });
@@ -116,7 +118,13 @@ export async function loadCommunityDraft() {
       req.onerror = () => resolve(null);
     });
     if (saved) {
-      draft = saved.draft;
+      draft = { ...emptyDraft(), ...saved.draft };
+      if (
+        draft.back &&
+        !saved.draft.backSourceId &&
+        !draft.cards.some((c) => c.sourceId)
+      )
+        draft.backSourceId = "__saved";
       receipts = saved.receipts || [];
     }
   } catch {}
@@ -133,47 +141,38 @@ function statusLabel(status) {
 }
 export function submissionView(cards) {
   const locked = busy || draft.remote;
+  const selected = new Set(draft.cards.map((c) => c.sourceId).filter(Boolean));
+  const backCard =
+    draft.backSourceId === "__saved"
+      ? null
+      : cards.find((c) => c.id === draft.backSourceId) ||
+        cards.find((c) => c.id === draft.cards[0]?.sourceId);
   return `<main class="content-page community-page"><div class="page-heading"><div><div class="eyebrow">${t("СПІЛЬНОТА")}</div><h1>${t("Запропонувати колоду")}</h1><p>${t("Додайте свої карти. Власник перегляне колоду перед публікацією в бібліотеці.")}</p></div><a class="text-button" href="#library">← ${t("Уся бібліотека")}</a></div>
   <form id="submission-form" class="submission-layout"><section class="community-panel"><h2>${t("Про колоду")}</h2><label class="field"><span>${t("Назва колоди")}</span><input data-sub-field="title" value="${e(draft.title)}" maxlength="100" required ${locked ? "disabled" : ""}></label><label class="field"><span>${t("Автор / псевдонім")}</span><input data-sub-field="author" value="${e(draft.author)}" maxlength="100" required ${locked ? "disabled" : ""}></label><label class="field"><span>${t("Короткий опис")}</span><textarea data-sub-field="description" maxlength="1000" ${locked ? "disabled" : ""}>${e(draft.description)}</textarea></label><label class="field"><span>${t("Мова карт і правил")}</span><select data-sub-field="language" ${locked ? "disabled" : ""}><option value="en" ${draft.language === "en" ? "selected" : ""}>English</option><option value="uk" ${draft.language === "uk" ? "selected" : ""}>Українська</option><option value="other" ${draft.language === "other" ? "selected" : ""}>${t("Інша")}</option></select></label>
-  <h2>${t("Сорочка та правила")}</h2><p class="muted">${t("Без власної сорочки буде використано MINION. Правила можна додати текстом або PDF.")}</p><label class="field"><span>${t("Зображення сорочки")}</span><input id="submission-back" type="file" accept="image/png,image/jpeg,image/webp" ${locked ? "disabled" : ""}></label>${draft.back ? `<div class="submission-back-preview"><img src="${draft.back}" alt="${t("Сорочка")}"><button type="button" class="text-button" id="remove-submission-back" ${locked ? "disabled" : ""}>${t("Прибрати")}</button></div>` : ""}<label class="field"><span>${t("Правила колоди")}</span><textarea data-sub-field="rulesText" maxlength="20000" ${locked ? "disabled" : ""}>${e(draft.rulesText)}</textarea></label><label class="field"><span>${t("Правила PDF · до 3 МБ")}</span><input id="submission-rules-pdf" type="file" accept="application/pdf" ${locked ? "disabled" : ""}></label>${draft.rulesPDF ? `<p class="muted">${e(draft.rulesPDF.name)} <button type="button" class="text-button" id="remove-submission-rules" ${locked ? "disabled" : ""}>${t("Прибрати")}</button></p>` : ""}</section>
-  <section class="community-panel"><div class="submission-card-heading"><h2>${t("Карти")} <span>${draft.cards.length} / 60</span></h2><span>${draft.cards.reduce((sum, c) => sum + c.copies, 0)} ${t("примірників")}</span></div><p class="muted">${t("Завантажте готові лицьові сторони або виберіть карти з «Мої карти». Зображення зберігаються повністю, без обрізання тексту.")}</p><label class="button ghost upload-deck-label">${t("Завантажити зображення карт")}<input id="submission-images" type="file" multiple accept="image/png,image/jpeg,image/webp" ${locked ? "disabled" : ""}></label>
-  ${cards.length ? `<details class="submission-my-cards"><summary>${t("Додати з «Мої карти»")}</summary><div>${cards.map((c, i) => `<label class="check-field"><input type="checkbox" data-project-card="${i}" ${locked ? "disabled" : ""} ${c.name ? "checked" : ""}><span data-user-content>${e(c.name || t("Без назви"))}</span></label>`).join("")}</div><button type="button" class="button ghost small" id="add-project-cards" ${locked ? "disabled" : ""}>${t("Додати вибрані")}</button></details>` : ""}
-  <div class="submission-cards">${draft.cards.map((c, i) => `<article class="submission-card"><img src="${c.data}" alt=""><label class="field"><span>${t("Назва карти")}</span><input data-sub-card="${i}" value="${e(c.name)}" maxlength="100" required ${locked ? "disabled" : ""}></label><label class="field copies-field"><span>${t("Копії")}</span><input type="number" data-sub-copies="${i}" min="1" max="40" value="${c.copies}" required ${locked ? "disabled" : ""}></label><button type="button" class="icon-button" data-remove-sub-card="${i}" aria-label="${t("Прибрати")}" ${locked ? "disabled" : ""}>×</button></article>`).join("") || `<p class="empty-state">${t("Додайте першу карту колоди.")}</p>`}</div>
+  <h2>${t("Сорочка та правила")}</h2><p class="muted">${t("Виберіть сорочку однієї зі своїх карт. Вона буде спільною для всієї колоди.")}</p><label class="field"><span>${t("Сорочка з конструктора")}</span><select id="submission-back-source" ${locked ? "disabled" : ""}><option value="" ${!draft.backSourceId ? "selected" : ""}>${t("Сорочка першої вибраної карти")}</option>${cards.map((c, i) => `<option value="${e(c.id)}" ${draft.backSourceId === c.id ? "selected" : ""}>${e(c.name || `${t("Без назви")} · ${i + 1}`)}</option>`).join("")}${draft.backSourceId === "__saved" ? `<option value="__saved" selected>${t("Збережена сорочка чернетки")}</option>` : ""}</select></label>
+  ${backCard ? `<div class="submission-back-preview"><canvas data-sub-preview="${e(backCard.id)}" data-back="true" aria-label="${t("Сорочка")}"></canvas><button type="button" class="text-button" data-edit-source-back="${e(backCard.id)}" ${locked ? "disabled" : ""}>${t("Редагувати сорочку")}</button></div>` : draft.back ? `<div class="submission-back-preview"><img src="${draft.back}" alt="${t("Сорочка")}"></div>` : `<p class="muted">${t("Додайте карту, щоб побачити її сорочку.")}</p>`}
+  <label class="field"><span>${t("Правила колоди")}</span><textarea data-sub-field="rulesText" maxlength="20000" ${locked ? "disabled" : ""}>${e(draft.rulesText)}</textarea></label><label class="field"><span>${t("Правила PDF · до 3 МБ")}</span><input id="submission-rules-pdf" type="file" accept="application/pdf" ${locked ? "disabled" : ""}></label>${draft.rulesPDF ? `<p class="muted">${e(draft.rulesPDF.name)} <button type="button" class="text-button" id="remove-submission-rules" ${locked ? "disabled" : ""}>${t("Прибрати")}</button></p>` : ""}</section>
+  <section class="community-panel"><div class="submission-card-heading"><h2>${t("Карти")} <span>${draft.cards.length} / 60</span></h2><span>${draft.cards.reduce((sum, c) => sum + c.copies, 0)} ${t("примірників")}</span></div>
+  <h3>${t("Карти в колоді")}</h3><div class="submission-cards">${draft.cards.map((c, i) => `<article class="submission-card"><img src="${c.data}" alt=""><label class="field"><span>${t("Назва карти")}</span><input data-sub-card="${i}" value="${e(c.name)}" maxlength="100" required ${locked ? "disabled" : ""}></label><label class="field copies-field"><span>${t("Копії")}</span><input type="number" data-sub-copies="${i}" min="1" max="40" value="${c.copies}" required ${locked ? "disabled" : ""}></label><button type="button" class="icon-button" data-remove-sub-card="${i}" aria-label="${t("Прибрати")}" ${locked ? "disabled" : ""}>×</button></article>`).join("") || `<p class="empty-state">${t("Виберіть карти нижче, щоб зібрати колоду.")}</p>`}</div>
+  <div class="submission-picker-heading"><h3>${t("Додати з «Мої карти»")}</h3><a class="text-button" href="#editor">${t("Створити карту")}</a></div><p class="muted">${t("Виберіть карти, створені в конструкторі. Назву можна змінити тут — вона збережеться також у «Мої карти».")}</p>
+  <div class="submission-source-grid">${cards.map((c, i) => `<article class="submission-source-card"><canvas data-sub-preview="${e(c.id)}" aria-label="${e(c.name || t("Без назви"))}"></canvas><label class="field"><span>${t("Назва карти")}</span><input data-source-name="${e(c.id)}" value="${e(c.name)}" placeholder="${t("Введіть назву карти")}" maxlength="100" ${locked ? "disabled" : ""}></label><button type="button" class="button ghost small" data-add-source="${e(c.id)}" ${locked || selected.has(c.id) ? "disabled" : ""}>${t(selected.has(c.id) ? "У колоді" : "Додати до колоди")}</button><button type="button" class="text-button" data-edit-source="${e(c.id)}" ${locked ? "disabled" : ""}>${t("Редагувати карту")}</button></article>`).join("")}</div>
   <label class="check-field submission-rights"><input data-sub-field="rights" type="checkbox" ${draft.rights ? "checked" : ""} required ${locked ? "disabled" : ""}><span>${t("Я маю право ділитися цими матеріалами й дозволяю розмістити їх у бібліотеці з моїм авторством.")}</span></label><label class="submission-honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><progress id="submission-progress" hidden></progress><p id="submission-status" role="status" aria-live="polite"></p><button class="button primary" id="send-submission" ${busy ? "disabled" : ""}>${t(draft.remote ? "Продовжити надсилання" : "Надіслати на перевірку")}</button>${draft.remote && !busy ? `<button class="text-button" type="button" id="edit-submission-again">${t("Повернутися до редагування")}</button>` : ""}</section></form>
   ${receipts.length ? `<section class="community-panel submission-receipts"><h2>${t("Мої заявки")}</h2>${receipts.map((r, i) => `<article><div><strong data-user-content>${e(r.title)}</strong><p>${statusLabel(r.status)}</p>${r.decisionNote ? `<p data-user-content>${e(r.decisionNote)}</p>` : ""}${r.status === "approved" ? `<a href="#library/${e(r.id)}">${t("Відкрити колоду")}</a>` : ""}</div><button class="button ghost small" data-refresh-receipt="${i}">${t("Оновити статус")}</button></article>`).join("")}</section>` : ""}</main>`;
 }
-async function imageData(source) {
-  const image = await createImageBitmap(source);
-  try {
-    if (image.width * image.height > 40000000)
-      throw Error(t("Зображення занадто велике."));
-    const canvas = document.createElement("canvas");
-    canvas.width = 750;
-    canvas.height = 1040;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, 750, 1040);
-    const ratio = Math.min(750 / image.width, 1040 / image.height);
-    ctx.drawImage(
-      image,
-      (750 - image.width * ratio) / 2,
-      (1040 - image.height * ratio) / 2,
-      image.width * ratio,
-      image.height * ratio,
-    );
-    return dataURL(
-      await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/webp", 0.96),
-      ),
-    );
-  } finally {
-    image.close();
-  }
+async function cardImage(card, back = false) {
+  const canvas = await printable(card, { back });
+  return dataURL(
+    await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.96)),
+  );
 }
-const fileAllowed = (file) =>
-  ["image/png", "image/jpeg", "image/webp"].includes(file.type) &&
-  file.size <= 15 * 1024 * 1024;
-export function bindSubmission({ cards, render, toast, onCatalogChange }) {
+export function bindSubmission({
+  cards,
+  render,
+  toast,
+  onCatalogChange,
+  saveProjects,
+  editSource,
+}) {
   const form = document.querySelector("#submission-form");
   if (!form) return;
   const status = (message, error = false) => {
@@ -191,13 +190,92 @@ export function bindSubmission({ cards, render, toast, onCatalogChange }) {
         save();
       }),
   );
-  form.querySelectorAll("[data-sub-card]").forEach(
-    (n) =>
-      (n.oninput = () => {
-        draft.cards[Number(n.dataset.subCard)].name = n.value;
-        save();
-      }),
-  );
+  async function renameSource(id, name) {
+    const source = cards.find((c) => c.id === id);
+    if (!source) return;
+    source.name = name;
+    for (const entry of draft.cards.filter((c) => c.sourceId === id))
+      entry.name = name;
+    for (const field of form.querySelectorAll("[data-sub-card]")) {
+      if (draft.cards[Number(field.dataset.subCard)].sourceId === id)
+        field.value = name;
+    }
+    await saveProjects();
+    await saveDraft();
+  }
+  async function refreshSourcePreview(id) {
+    renderPreviews();
+    const source = cards.find((c) => c.id === id);
+    if (!source) return;
+    const entry = draft.cards.find((c) => c.sourceId === source?.id);
+    if (!entry) return;
+    try {
+      entry.data = await cardImage(source);
+      const index = draft.cards.indexOf(entry);
+      const image = form
+        .querySelector(`[data-sub-card="${index}"]`)
+        ?.closest("article")
+        ?.querySelector("img");
+      if (image) image.src = entry.data;
+      await saveDraft();
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+  form.querySelectorAll("[data-source-name]").forEach((n) => {
+    n.oninput = () => {
+      n.setCustomValidity("");
+      renameSource(n.dataset.sourceName, n.value).catch((err) =>
+        toast(err.message, true),
+      );
+    };
+    n.onchange = () => refreshSourcePreview(n.dataset.sourceName);
+  });
+  form.querySelectorAll("[data-sub-card]").forEach((n) => {
+    n.onchange = () =>
+      refreshSourcePreview(draft.cards[Number(n.dataset.subCard)].sourceId);
+    n.oninput = () => {
+      const entry = draft.cards[Number(n.dataset.subCard)];
+      entry.name = n.value;
+      const sourceInput = [...form.querySelectorAll("[data-source-name]")].find(
+        (el) => el.dataset.sourceName === entry.sourceId,
+      );
+      if (sourceInput) sourceInput.value = n.value;
+      if (entry.sourceId)
+        renameSource(entry.sourceId, n.value).catch((err) =>
+          toast(err.message, true),
+        );
+      else save();
+    };
+  });
+  async function renderPreviews() {
+    for (const n of form.querySelectorAll("[data-sub-preview]")) {
+      const source = cards.find((c) => c.id === n.dataset.subPreview);
+      if (!source) continue;
+      try {
+        const { canvas } = await renderCard(source, {
+          back: n.dataset.back === "true",
+        });
+        if (!n.isConnected) return;
+        n.width = 225;
+        n.height = 312;
+        n.getContext("2d").drawImage(canvas, 0, 0, n.width, n.height);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    }
+  }
+  renderPreviews();
+  form
+    .querySelectorAll("[data-edit-source], [data-edit-source-back]")
+    .forEach(
+      (n) =>
+        (n.onclick = () =>
+          editSource(
+            n.dataset.editSource || n.dataset.editSourceBack,
+            !!n.dataset.editSourceBack,
+          )),
+    );
   form.querySelectorAll("[data-sub-copies]").forEach(
     (n) =>
       (n.onchange = () => {
@@ -217,78 +295,63 @@ export function bindSubmission({ cards, render, toast, onCatalogChange }) {
         render();
       }),
   );
-  const addImages = async (files) => {
-    if (files.length + draft.cards.length > 60)
-      throw Error(t("Можна додати щонайбільше 60 різних карт."));
-    const result = [];
-    for (const file of files) {
-      if (!fileAllowed(file))
-        throw Error(t("Виберіть PNG, JPG або WebP розміром до 15 МБ."));
-      result.push({
-        name: file.name.replace(/\.[^.]+$/, ""),
-        copies: 1,
-        data: await imageData(file),
-      });
-    }
-    draft.cards.push(...result);
-  };
-  document.querySelector("#submission-images").onchange = async (ev) => {
+  form.querySelectorAll("[data-add-source]").forEach(
+    (n) =>
+      (n.onclick = async () => {
+        const source = cards.find((c) => c.id === n.dataset.addSource);
+        if (
+          !source ||
+          busy ||
+          draft.remote ||
+          draft.cards.some((c) => c.sourceId === source.id)
+        )
+          return;
+        if (!source.name.trim()) {
+          const field = [...form.querySelectorAll("[data-source-name]")].find(
+            (el) => el.dataset.sourceName === source.id,
+          );
+          field.setCustomValidity(t("Введіть назву карти"));
+          field.reportValidity();
+          field.focus();
+          return;
+        }
+        try {
+          if (draft.cards.length >= 60)
+            throw Error(t("Можна додати щонайбільше 60 різних карт."));
+          busy = true;
+          n.disabled = true;
+          draft.cards.push({
+            sourceId: source.id,
+            name: source.name,
+            copies: Math.max(1, Math.min(40, Number(source.copies) || 1)),
+            data: await cardImage(source),
+          });
+          await saveDraft();
+        } catch (err) {
+          toast(err.message, true);
+        } finally {
+          busy = false;
+          render();
+        }
+      }),
+  );
+  document.querySelector("#submission-back-source").onchange = async (ev) => {
+    draft.backSourceId = ev.target.value;
+    const source =
+      draft.backSourceId === "__saved"
+        ? null
+        : cards.find((c) => c.id === draft.backSourceId) ||
+          cards.find((c) => c.id === draft.cards[0]?.sourceId);
+    busy = true;
+    render();
     try {
-      busy = true;
-      await addImages([...ev.target.files]);
+      if (source) draft.back = await cardImage(source, true);
       await saveDraft();
     } catch (err) {
       toast(err.message, true);
     } finally {
       busy = false;
       render();
-    }
-  };
-  document
-    .querySelector("#add-project-cards")
-    ?.addEventListener("click", async () => {
-      try {
-        const indexes = [
-          ...form.querySelectorAll("[data-project-card]:checked"),
-        ].map((n) => Number(n.dataset.projectCard));
-        if (indexes.length + draft.cards.length > 60)
-          throw Error(t("Можна додати щонайбільше 60 різних карт."));
-        busy = true;
-        const additions = [];
-        for (const index of indexes) {
-          const card = cards[index];
-          if (!card.name.trim())
-            throw Error(t("Спочатку назвіть карту в конструкторі."));
-          const canvas = await printable(card);
-          const blob = await new Promise((resolve) =>
-            canvas.toBlob(resolve, "image/webp", 0.96),
-          );
-          additions.push({
-            name: card.name,
-            copies: Math.max(1, Math.min(40, Number(card.copies) || 1)),
-            data: await dataURL(blob),
-          });
-        }
-        draft.cards.push(...additions);
-        await saveDraft();
-      } catch (err) {
-        toast(err.message, true);
-      } finally {
-        busy = false;
-        render();
-      }
-    });
-  document.querySelector("#submission-back").onchange = async (ev) => {
-    const file = ev.target.files[0];
-    if (!file) return;
-    try {
-      if (!fileAllowed(file))
-        throw Error(t("Виберіть PNG, JPG або WebP розміром до 15 МБ."));
-      draft.back = await imageData(file);
-      await saveDraft();
-      render();
-    } catch (err) {
-      toast(err.message, true);
     }
   };
   document.querySelector("#submission-rules-pdf").onchange = async (ev) => {
@@ -304,13 +367,6 @@ export function bindSubmission({ cards, render, toast, onCatalogChange }) {
       toast(err.message, true);
     }
   };
-  document
-    .querySelector("#remove-submission-back")
-    ?.addEventListener("click", () => {
-      draft.back = null;
-      save();
-      render();
-    });
   document
     .querySelector("#remove-submission-rules")
     ?.addEventListener("click", () => {
@@ -355,6 +411,22 @@ export function bindSubmission({ cards, render, toast, onCatalogChange }) {
     render();
     try {
       if (!draft.remote) {
+        // Refresh snapshots from the editor so artwork, titles and the chosen
+        // back always match what the author most recently saved.
+        for (const entry of draft.cards) {
+          const source = cards.find((c) => c.id === entry.sourceId);
+          if (source) {
+            if (!source.name.trim()) throw Error(t("Введіть назву карти"));
+            entry.name = source.name;
+            entry.data = await cardImage(source);
+          }
+        }
+        const backSource =
+          draft.backSourceId === "__saved"
+            ? null
+            : cards.find((c) => c.id === draft.backSourceId) ||
+              cards.find((c) => c.id === draft.cards[0]?.sourceId);
+        if (backSource) draft.back = await cardImage(backSource, true);
         draft.remote = await communityRequest("create", {
           method: "POST",
           body: {

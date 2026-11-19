@@ -374,6 +374,16 @@ function bind() {
     render,
     toast,
     onCatalogChange: refreshCommunity,
+    saveProjects: persist,
+    editSource: (id, back) => {
+      const index = state.cards.findIndex((c) => c.id === id);
+      if (index < 0) return;
+      state.active = index;
+      tab = back ? "back" : "text";
+      side = back ? "back" : "front";
+      persist();
+      location.hash = "editor";
+    },
   });
   bindModeration({
     render,

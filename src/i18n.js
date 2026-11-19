@@ -1,5 +1,31 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  [
+    "Виберіть сорочку однієї зі своїх карт. Вона буде спільною для всієї колоди.",
+    "Choose the back of one of your cards. It will be used for the whole deck.",
+  ],
+  ["Сорочка з конструктора", "Card back from My cards"],
+  ["Сорочка першої вибраної карти", "Back of the first selected card"],
+  ["Збережена сорочка чернетки", "Previously saved draft back"],
+  ["Редагувати сорочку", "Edit card back"],
+  [
+    "Додайте карту, щоб побачити її сорочку.",
+    "Add a card to preview its back.",
+  ],
+  ["Карти в колоді", "Cards in this deck"],
+  [
+    "Виберіть карти нижче, щоб зібрати колоду.",
+    "Choose cards below to build your deck.",
+  ],
+  [
+    "Виберіть карти, створені в конструкторі. Назву можна змінити тут — вона збережеться також у «Мої карти».",
+    "Choose cards created in the builder. Rename them here and the title also updates in My cards.",
+  ],
+  ["Введіть назву карти", "Enter a card title"],
+  ["У колоді", "Added to deck"],
+  ["Додати до колоди", "Add to deck"],
+  ["Редагувати карту", "Edit card"],
+
   ["Додати сорочки карт", "Include card backs"],
   ["Змінити пароль", "Change password"],
   ["Новий пароль", "New password"],
