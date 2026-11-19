@@ -20,6 +20,18 @@ A browser-based card constructor and fan-material library for **Tyrants of the U
 
 Drafts stay in the current browser. They are not synchronized across devices or sent to a server. Export a JSON project as a backup.
 
+## Community deck submissions
+
+**Propose a deck** is available in the library, My cards and the footer. Authors can select saved editor cards or upload complete PNG/JPEG/WebP card fronts, give the deck and each card a name, set copy counts, and add a back plus text/PDF rules. Up to 60 unique cards are supported per submission. Fronts are fitted to the standard 750 × 1040 canvas without cropping their text. Unsubmitted drafts stay in a separate browser database; submitted images and metadata are stored privately in Netlify Blobs.
+
+The owner signs in at `#moderation` to review full-size cards and rules, add feedback, approve/publish, decline or unpublish a deck. Approval connects the same data to the existing library, card viewer, rules reader and A4 printing. Only approved decks appear in the public catalog. Authors can refresh their receipt to see the decision; receipt access stays in the browser where they submitted it. Declined submissions can be permanently deleted by the owner.
+
+This requires the Netlify Function in `netlify/functions/decks.js`, not just static hosting. `npm run build` also prepares a standalone function ZIP in the ignored `.netlify/functions-build` directory for manual deployments. Keep the function in every future Netlify deploy; a static-files-only deploy can remove it. Standard Netlify Git builds use `netlify.toml`.
+
+Set `DECK_SESSION_SECRET` to a random secret and `DECK_ADMIN_SETUP_HASH` to the SHA-256 of a one-time setup token through Netlify's environment settings, never in browser code or Git. The setup link is `#moderation/setup/<token>`; it works only before an owner credential exists. The server stores a salted scrypt password hash and issues an eight-hour HttpOnly, Secure, SameSite=Strict cookie. The owner can change the password in the moderation page, invalidating previous sessions. Uploads require a private submission token; images/rules remain inaccessible until approval, except to the owner. Input size/type checks, atomic upload quotas and sign-in limits run on the server. Images are re-encoded in the browser; HTML and SVG uploads are not accepted.
+
+`tests/submissions.test.mjs` covers a complete 30-card moderation cycle, private images, forged ownership/session attempts, cross-origin writes, quotas, upload retries and library print compatibility. Local server tests use an isolated in-memory store; production uses Netlify Blobs with strong consistency.
+
 ## Run
 
 Requires Node.js 22+.

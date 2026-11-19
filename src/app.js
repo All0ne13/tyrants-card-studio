@@ -16,6 +16,15 @@ import { artworkRect, artworkPlacement, dragArtwork } from "./artwork.js";
 import { FrameColors } from "./frame-colors.js";
 import { libraryPrintPlan } from "./library-print-plan.js";
 import { exportLibraryDeck } from "./library-print.js";
+import {
+  fetchCommunityPacks,
+  loadCommunityDraft,
+  captureSetupToken,
+  submissionView,
+  bindSubmission,
+  moderationView,
+  bindModeration,
+} from "./community.js";
 import { showAsset } from "./asset-viewer.js";
 import {
   libraryView as renderLibrary,
@@ -187,7 +196,7 @@ function header(route) {
   return `<header class="topbar"><a class="brand" href="#editor"><span class="brand-icon">${icon("card", 27)}</span><span class="brand-name">Конструктор карт<span class="brand-sub">Тирани Підземелля</span></span></a><nav aria-label="Основна навігація"><a class="${route === "editor" ? "active" : ""}" href="#editor">${icon("card")}<span>Конструктор</span></a><a class="${["library", "rules"].includes(route) ? "active" : ""}" href="#library">${icon("book")}<span>Бібліотека</span></a><a class="${route === "projects" ? "active" : ""}" href="#projects">${icon("folder")}<span>Мої карти <b>${state.cards.length}</b></span></a></nav><div class="header-actions"><select id="locale-switch" aria-label="Мова інтерфейсу"><option value="en" ${locale === "en" ? "selected" : ""}>English</option><option value="uk" ${locale === "uk" ? "selected" : ""}>Українська</option></select><span class="save-status" id="saved">${icon("check", 13)} Збережено на пристрої</span><button class="button small ghost import-project">${icon("upload")}<span>Імпорт</span></button>${supportMenu()}</div></header>`;
 }
 function footer() {
-  return `<footer class="studio-footer"><div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span>63,5 × 88 мм</span></div></footer>`;
+  return `<footer class="studio-footer"><div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span><a href="#submit">${t("Запропонувати колоду")}</a> · <a href="#moderation">${t("Для власника")}</a> · 63,5 × 88 мм</span></div></footer>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
@@ -298,7 +307,7 @@ async function preview() {
   }
 }
 function projects() {
-  return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">МОЇ ПРОЄКТИ</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3 data-user-content>${e(c.name || t("Без назви"))}</h3><p data-user-content>${e(c.type || t("Власна карта"))} · ${t("63,5 × 88 мм")}</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
+  return `<main class="content-page"><div class="page-heading"><div><div class="eyebrow">МОЇ ПРОЄКТИ</div><h1>Мої карти <em>${state.cards.length}</em></h1><p>Зберігаються у цьому браузері. Експортуйте проєкт, щоб перенести на інший пристрій.</p></div><div class="project-page-actions"><a class="button ghost" href="#submit">${t("Запропонувати колоду")}</a><button class="button primary" id="new-card">${icon("plus")} Створити карту</button></div></div><div class="project-grid">${state.cards.map((c, i) => `<article class="project-card"><button class="project-open" data-open="${i}"><canvas data-thumbnail="${i}"></canvas></button><div><h3 data-user-content>${e(c.name || t("Без назви"))}</h3><p data-user-content>${e(c.type || t("Власна карта"))} · ${t("63,5 × 88 мм")}</p><button class="text-button" data-open="${i}">Редагувати ${icon("chevron", 14)}</button></div></article>`).join("")}</div></main>`;
 }
 function libraryView() {
   return renderLibrary({ library, filter, search, packId });
@@ -340,9 +349,13 @@ function render() {
       ? libraryView()
       : r === "rules"
         ? rulesView(library, location.hash.slice(1).split("/")[1], rulePage)
-        : r === "projects"
-          ? projects()
-          : editor()) +
+        : r === "submit"
+          ? submissionView(state.cards)
+          : r === "moderation"
+            ? moderationView()
+            : r === "projects"
+              ? projects()
+              : editor()) +
     footer();
   localizeUI($("#app"));
   bind();
@@ -356,6 +369,32 @@ function render() {
     });
 }
 function bind() {
+  bindSubmission({
+    cards: state.cards,
+    render,
+    toast,
+    onCatalogChange: refreshCommunity,
+  });
+  bindModeration({
+    render,
+    toast,
+    onCatalogChange: refreshCommunity,
+    showAsset: (pack, asset) =>
+      showAsset(pack, asset, { icon, escape: e, onUseBack: async () => {} }),
+    showRules: (pack) => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "community-rules-dialog";
+      dialog.innerHTML =
+        `<form method="dialog"><button class="icon-button" aria-label="${t("Закрити")}">×</button></form>` +
+        rulesView([pack], pack.rulesDocuments[0].id);
+      localizeUI(dialog);
+      dialog.querySelector(".back-library")?.remove();
+      dialog.querySelector("[data-rule-pack]")?.remove();
+      document.body.append(dialog);
+      dialog.onclose = () => dialog.remove();
+      dialog.showModal();
+    },
+  });
   updateFrameColors();
   $$("[data-print-pack]").forEach(
     (n) =>
@@ -713,6 +752,13 @@ function showPrintDialog(pack) {
   const dialog = document.createElement("dialog");
   dialog.className = "print-dialog";
   dialog.innerHTML = `<form method="dialog"><button class="icon-button print-close" aria-label="Закрити">${icon("close")}</button></form><div class="eyebrow">ДРУК КОЛОДИ</div><h2 data-source-text>${e(pack.title)}</h2>${plan.sourceSheets ? `<p>Оригінальні аркуші автора з картами та сорочками. Розміри й розташування збережено.</p>` : `<p>A4 · 63,5 × 88 мм · ${t("Проміжок 3 мм і мітки різання")}</p><p id="print-card-count">${plan.cards.length} ${t("карт")}</p><label class="check-field"><input id="library-print-backs" type="checkbox" checked><span>Додати сорочки MINION</span></label>${plan.extra ? `<label class="check-field"><input id="library-print-extras" type="checkbox" checked><span>Додати додаткові карти та пам’ятки</span></label>` : ""}`}${pack.id === "delver" ? `<p class="print-source-warning">У джерелах є розбіжність: 41 ринкова карта замість 40. Експорт зберігає всі надані карти.</p>` : ""}<p class="print-instructions">${plan.sourceSheets ? t("Друкуйте оригінальні аркуші за вказівками автора.") : t("Для двостороннього друку виберіть переворот уздовж довгого краю.")} ${t("Масштаб 100%, без підгонки. Спочатку надрукуйте один аркуш.")}</p><progress id="library-print-progress" value="0" max="1" hidden></progress><p id="library-print-status" role="status" aria-live="polite"></p><button class="button primary wide" id="library-print-download">${icon("download")} ${t(plan.sourceSheets ? "Завантажити друковані файли ZIP" : "Завантажити PDF із сорочками")}</button>`;
+  if (pack.community) {
+    const label = dialog
+      .querySelector("#library-print-backs")
+      ?.closest("label")
+      ?.querySelector("span");
+    if (label) label.textContent = t("Додати сорочки карт");
+  }
   document.body.append(dialog);
   localizeUI(dialog);
   const extras = $("#library-print-extras", dialog),
@@ -961,6 +1007,12 @@ try {
     };
   }
 } catch {}
+async function refreshCommunity() {
+  const packs = await fetchCommunityPacks();
+  library = [...library.filter((p) => !p.community), ...packs];
+}
+captureSetupToken();
+await loadCommunityDraft();
 try {
   library = await (await fetch("library.json", { cache: "no-store" })).json();
 } catch {
@@ -992,3 +1044,8 @@ window.addEventListener("hashchange", () => {
 packId =
   route() === "library" ? location.hash.slice(1).split("/")[1] || null : null;
 render();
+refreshCommunity()
+  .then(() => {
+    if (["library", "rules"].includes(route())) render();
+  })
+  .catch(() => {});

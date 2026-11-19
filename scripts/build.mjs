@@ -1,5 +1,6 @@
 import { build } from "esbuild";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { zipSync } from "fflate";
 import { createHash } from "node:crypto";
 await build({
   entryPoints: ["src/app.js"],
@@ -26,4 +27,19 @@ const html = (await readFile("dist/index.html", "utf8"))
     `href="styles.css?v=${styleVersion}"`,
   );
 await writeFile("dist/index.html", html);
+await mkdir(".netlify/functions-build", { recursive: true });
+await build({
+  entryPoints: ["netlify/functions/decks.js"],
+  outfile: ".netlify/functions-build/decks.js",
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  target: "node22",
+  minify: true,
+});
+const functionBytes = await readFile(".netlify/functions-build/decks.js");
+await writeFile(
+  ".netlify/functions-build/decks.zip",
+  zipSync({ "decks.js": functionBytes }),
+);
 console.log("Built Tyrants Card Studio.");

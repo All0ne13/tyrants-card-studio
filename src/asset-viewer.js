@@ -8,7 +8,8 @@ export function showAsset(pack, asset, { icon, escape: e, onUseBack }) {
   const d = document.createElement("dialog");
   d.className = `asset-dialog${wide ? " wide-asset" : ""}`;
   d.setAttribute("aria-labelledby", "asset-viewer-title");
-  const extension = imageURL.split(".").pop().split(/[?#]/)[0];
+  const extension =
+    asset.extension || imageURL.split(".").pop().split(/[?#]/)[0];
   d.innerHTML = `<button class="icon-button dialog-close" aria-label="Закрити">${icon("close")}</button>
     <div class="asset-large"><div class="asset-stage" tabindex="0" aria-label="Масштаб зображення"><img src="${e(imageURL)}" alt="${e(asset.name)}" draggable="false"></div>
     ${wide ? `<div class="asset-zoom"><button class="icon-button zoom-out" type="button" aria-label="Зменшити">−</button><input class="zoom-range" type="range" min="10" max="400" value="100" step="1" aria-label="Масштаб зображення"><output class="zoom-level">100%</output><button class="icon-button zoom-in" type="button" aria-label="Збільшити">+</button><button class="button ghost small zoom-fit" type="button">Вписати у вікно</button></div>` : ""}</div>
