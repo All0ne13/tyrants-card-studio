@@ -24,10 +24,27 @@ test("dragging follows the pointer in print coordinates and clamps at the artwor
     ...card,
     artScale: 1,
   });
-  assert.deepEqual(dragArtwork(card, fitted, rect, 100, 100), {
+  assert.deepEqual(dragArtwork({ ...card, artScale: 1 }, fitted, rect, 0, 0), {
+    artScale: 1,
     artX: 0,
     artY: 0,
   });
+});
+
+test("a fitted image pans horizontally without exposing blank edges", () => {
+  const card = { artScale: 1, artX: 0, artY: 0, rulesHeight: 260 };
+  const rect = artworkRect(card),
+    image = { width: 658, height: 900 };
+  const initial = artworkPlacement(image, rect, card);
+  for (const dx of [-80, 80]) {
+    const crop = dragArtwork(card, initial, rect, dx, 0);
+    const moved = artworkPlacement(image, rect, { ...card, ...crop });
+    assert.ok(crop.artScale > 1 && crop.artScale <= 3);
+    assert.equal(Math.sign(crop.artX), Math.sign(dx));
+    assert.ok(moved.x <= rect.x + 0.001);
+    assert.ok(moved.x + moved.w >= rect.x + rect.w - 0.001);
+    assert.ok(moved.y <= rect.y && moved.y + moved.h >= rect.y + rect.h);
+  }
 });
 
 test("native color-picker movement is one undo step and histories stay separate per card", () => {

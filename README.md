@@ -5,7 +5,7 @@ A browser-based card constructor and fan-material library for **Tyrants of the U
 ## Features
 
 - Blank front template with a fixed purple frame, aspect circle, title, cost, type, rules, flavour, victory points and footer.
-- Upload artwork, drag it directly in the card preview, or adjust its crop and zoom with sliders. Mouse and touch dragging use the same saved crop.
+- Upload artwork, drag it directly in the card preview, or adjust its crop and zoom with sliders. Mouse and touch dragging use the same saved crop. When a fitted image has no room to move on an axis, dragging gently increases its zoom to make room without exposing blank edges.
 - Undo frame-color changes and reuse the eight most recent colors. Recent colors persist in this browser; undo history lasts for the editing session and is separate for each card.
 - Choose an aspect symbol or upload a custom icon. Obedience uses the chain symbol extracted from the supplied Wizards card, including in inline effects and print exports.
 - Original complete heading typeface, card proportions, aspect symbols and the bottom-left deck mark with an editable card number.

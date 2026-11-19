@@ -18,14 +18,31 @@ export function artworkPlacement(image, rect, card) {
 
 export function dragArtwork(start, placement, rect, dx, dy) {
   const clamp = (v) => Math.min(100, Math.max(-100, v));
+  // A freshly fitted image has no room to pan on at least one axis. Create
+  // only the extra crop requested by the gesture, keeping the window filled.
+  const zoom = Math.min(
+    3 / start.artScale,
+    Math.max(
+      1,
+      placement.w - rect.w < 0.01
+        ? (rect.w + 2 * Math.abs(dx)) / placement.w
+        : 1,
+      placement.h - rect.h < 0.01
+        ? (rect.h + 2 * Math.abs(dy)) / placement.h
+        : 1,
+    ),
+  );
+  const width = placement.w * zoom,
+    height = placement.h * zoom;
   return {
+    artScale: start.artScale * zoom,
     artX:
-      placement.w - rect.w > 0.01
-        ? clamp(start.artX + (dx * 200) / (placement.w - rect.w))
+      width - rect.w > 0.01
+        ? clamp(start.artX + (dx * 200) / (width - rect.w))
         : start.artX,
     artY:
-      placement.h - rect.h > 0.01
-        ? clamp(start.artY + (dy * 200) / (placement.h - rect.h))
+      height - rect.h > 0.01
+        ? clamp(start.artY + (dy * 200) / (height - rect.h))
         : start.artY,
   };
 }

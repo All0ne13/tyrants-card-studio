@@ -91,6 +91,23 @@ try {
   await page.locator('[data-upload="art"]').click();
   await (await chooser).setFiles(".preview/gremlin-art.png");
   await page.locator(".art-drag-region").waitFor();
+  const fittedArea = await page.locator(".art-drag-region").boundingBox();
+  await page.mouse.move(
+    fittedArea.x + fittedArea.width / 2,
+    fittedArea.y + fittedArea.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    fittedArea.x + fittedArea.width / 2 + 50,
+    fittedArea.y + fittedArea.height / 2,
+    { steps: 12 },
+  );
+  await page.mouse.up();
+  assert.ok(
+    Number(await page.locator('[data-key="artX"]').inputValue()) > 0,
+    "Fitted artwork pans horizontally without requiring the zoom slider",
+  );
+  await page.locator("#reset-crop").click();
   await setRange("artScale", 1.8);
   await page.waitForTimeout(300);
   const area = await page.locator(".art-drag-region").boundingBox();

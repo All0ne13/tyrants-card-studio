@@ -435,6 +435,7 @@ function bind() {
         y: ev.clientY,
         artX: card().artX,
         artY: card().artY,
+        artScale: card().artScale,
         moved: false,
         id: card().id,
       };
@@ -473,7 +474,7 @@ function bind() {
           dy * artDrag.scale,
         ),
       );
-      for (const key of ["artX", "artY"]) {
+      for (const key of ["artX", "artY", "artScale"]) {
         const slider = $(`[data-key="${key}"]`);
         if (slider) slider.value = card()[key];
       }
@@ -482,7 +483,11 @@ function bind() {
     const finishDrag = (ev, cancel = false) => {
       if (!artDrag || ev.pointerId !== artDrag.pointer) return;
       if (cancel && artDrag.moved)
-        Object.assign(card(), { artX: artDrag.artX, artY: artDrag.artY });
+        Object.assign(card(), {
+          artX: artDrag.artX,
+          artY: artDrag.artY,
+          artScale: artDrag.artScale,
+        });
       suppressArtClick = artDrag.moved;
       if (artDrag.moved) {
         changed();
