@@ -247,6 +247,27 @@
 .card-hit-areas:empty {
   pointer-events: none;
 }
+.art-drag-region { touch-action: none; cursor: grab; }
+.is-dragging-art, .is-dragging-art .art-drag-region { cursor: grabbing; }
+.is-dragging-art .art-drag-region { background: transparent; }
+.recent-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.recent-color-label { color: var(--muted); font-size: 12px; margin: 16px 0 9px; }
+.recent-color { width: 32px; height: 32px; border: 2px solid #79668b; border-radius: 50%; background: var(--swatch); }
+.recent-color.selected { outline: 2px solid #d5b7f2; outline-offset: 3px; }
+.frame-color-settings .color-field { margin-bottom: 12px; }
+.pack-print-action { padding: 0 16px 16px; }
+.pack-print-action .button { width: 100%; justify-content: center; min-height: 40px; }
+.print-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); box-sizing: border-box; overflow: auto; padding: 32px; border: 1px solid #79668b; border-radius: 12px; background: #1a1423; color: #eee8f4; }
+.print-dialog::backdrop { background: #08050ebd; backdrop-filter: blur(5px); }
+.print-dialog h2 { padding-right: 24px; margin: 18px 0; font-size: 32px; }
+.print-dialog p { font-size: 14px; line-height: 1.6; }
+.print-dialog .check-field { margin: 15px 0; }
+.print-dialog .print-close { position: absolute; right: 14px; top: 14px; }
+.print-dialog .print-instructions { color: var(--muted); margin: 22px 0; }
+.print-dialog .print-source-warning { border-left: 2px solid #d0aa64; padding-left: 12px; }
+.print-dialog progress { width: 100%; accent-color: #c7afe8; }
+.print-dialog [hidden] { display: none; }
+@media (max-width: 480px) { .print-dialog { padding: 24px; } .pack-print-header { width: 100%; } }
 @media (min-width: 1031px) {
   .workspace > .preview-panel,
   .workspace > .export-panel {

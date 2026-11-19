@@ -1,5 +1,8 @@
 export const SYMBOLS = {
-  obedience: { label: "Покора", image: "assets/card-parts/obedience.svg" },
+  obedience: {
+    label: "Покора",
+    image: "assets/card-parts/obedience-chain.png",
+  },
   influence: { label: "Вплив", image: "assets/card-parts/influence.png" },
   power: { label: "Сила", image: "assets/card-parts/power.png" },
   malice: { label: "Злоба", image: "assets/card-parts/malice.png" },

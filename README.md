@@ -5,7 +5,9 @@ A browser-based card constructor and fan-material library for **Tyrants of the U
 ## Features
 
 - Blank front template with a fixed purple frame, aspect circle, title, cost, type, rules, flavour, victory points and footer.
-- Upload artwork, adjust crop and zoom, choose a symbol or upload a custom icon.
+- Upload artwork, drag it directly in the card preview, or adjust its crop and zoom with sliders. Mouse and touch dragging use the same saved crop.
+- Undo frame-color changes and reuse the eight most recent colors. Recent colors persist in this browser; undo history lasts for the editing session and is separate for each card.
+- Choose an aspect symbol or upload a custom icon. Obedience uses the chain symbol extracted from the supplied Wizards card, including in inline effects and print exports.
 - Original complete heading typeface, card proportions, aspect symbols and the bottom-left deck mark with an editable card number.
 - Click any text region or icon in the card preview to open its editor. Ten ready-to-select deck marks are available alongside custom image uploads.
 - Card numbering is visible by default as **1/40**, with separate editable card-number and deck-size fields. Existing blank numbers and legacy fractions migrate automatically; invalid numbering blocks print export.
@@ -57,6 +59,12 @@ Use **Actual size / 100%**, not Fit to page. A4 sheets hold up to nine cards. Fo
 The requested card size is 63.5 × 88 mm. Check fit against your physical cards and sleeves before printing an entire deck. This version uses the trim size and does not add a professional-print bleed area.
 
 Source PDFs retain their original page sizes and are available separately from the card constructor exports.
+
+Each deck in the library has a **Print deck** button, both on its tile and on its detail page. For decks with individual card images, it creates an A4 PDF with the supplied copy counts, 3 mm gaps, crop marks and optional mirrored backs. Supporting cards can be excluded separately. Conflicting source counts are shown before export; no cards are silently removed.
+
+For Cohort and the Svirfneblin/Kuo-Toa update, only author-made print sheets are available. Their print button downloads those original PDFs, including supplied backs, as a ZIP rather than changing their layout.
+
+`scripts/check-community-feedback.mjs` checks mouse/touch crop persistence, frame-color undo and recent colors, both interface languages, responsive print dialogs, complete deck downloads, PDF dimensions and mirrored back positions. `scripts/prepare-obedience.mjs` reproduces the chain-icon extraction from the bundled Wizards card image.
 
 ## Library preparation
 

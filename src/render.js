@@ -5,6 +5,7 @@ import { SYMBOLS } from "./symbols.js";
 import { drawRichText } from "./rich-text.js";
 import { sourceLettering } from "./source-lettering.js";
 import { loadCardFonts, RULE_TYPE } from "./card-typography.js";
+import { artworkRect, artworkPlacement } from "./artwork.js";
 const images = new Map();
 export async function getImage(src) {
   if (!src) return null;
@@ -37,11 +38,7 @@ function fitText(ctx, text, max, start, min = 16) {
   return size;
 }
 function drawCover(ctx, im, rect, card) {
-  const s = Math.max(rect.w / im.width, rect.h / im.height) * card.artScale,
-    w = im.width * s,
-    h = im.height * s;
-  const x = rect.x + (rect.w - w) / 2 + ((card.artX / 100) * (w - rect.w)) / 2,
-    y = rect.y + (rect.h - h) / 2 + ((card.artY / 100) * (h - rect.h)) / 2;
+  const { x, y, w, h } = artworkPlacement(im, rect, card);
   ctx.save();
   ctx.beginPath();
   ctx.rect(rect.x, rect.y, rect.w, rect.h);
@@ -147,7 +144,7 @@ export async function renderCard(
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
   const whiteTop = 934 - Number(card.rulesHeight || 260);
-  const ar = { x: 46, y: 162, w: 658, h: whiteTop - 172 };
+  const ar = artworkRect(card);
   if (art) drawCover(ctx, art, ar, card);
   else {
     ctx.fillStyle = "#241e2e";

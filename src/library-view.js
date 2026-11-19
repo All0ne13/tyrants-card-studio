@@ -42,6 +42,10 @@ const kinds = {
   reference: "Правила",
   update: "Оновлення",
 };
+function printButton(pack, tile = false) {
+  if (pack.category !== "decks") return "";
+  return `<div class="${tile ? "pack-print-action" : "pack-print-header"}"><button type="button" class="button ${tile ? "small ghost" : "primary"}" data-print-pack="${e(pack.id)}" aria-label="${t("Друкувати колоду")}: ${e(pack.title)}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6z"/></svg>${t("Друкувати колоду")}</button></div>`;
+}
 
 export function packList(library, filter, search) {
   return library.filter((p) => matchesPack(p, filter, search));
@@ -60,7 +64,7 @@ export function packTile(pack) {
   const rulesURL = packRulesURL(pack);
   const rules = !!rulesURL;
   const externalRules = rulesURL.startsWith("https://");
-  return `<article class="pack-tile"><a class="pack-main" data-pack="${e(pack.id)}" href="#library/${e(pack.id)}"><div class="pack-cover ${e(pack.category)}">${pack.cover ? `<img src="${e(pack.cover)}" alt="" loading="lazy">` : `<span class="document-cover">${book}</span>`}<span class="pack-category">${t(pack.category === "decks" ? "КОЛОДА" : pack.category === "mats" ? "ПЛАНШЕТИ" : pack.category === "rules" ? "ПРАВИЛА" : "ПОЛЕ / ЖЕТОНИ")}</span></div><div class="pack-info"><div><h3 data-source-text>${e(pack.title)}</h3><p>${t(pack.subtitle)}</p></div><span aria-hidden="true">›</span></div></a><div class="pack-meta"><span class="pack-count">${count}${breakdown}</span>${rules ? `<a class="pack-rules-link" href="${e(rulesURL)}" ${externalRules ? 'target="_blank" rel="noopener noreferrer"' : ""} aria-label="${e(t("Прочитати правила"))}: ${e(pack.title)}">${t("Прочитати правила")}</a>` : `<span>${pack.files.length} ${t("файлів")}</span>`}</div></article>`;
+  return `<article class="pack-tile"><a class="pack-main" data-pack="${e(pack.id)}" href="#library/${e(pack.id)}"><div class="pack-cover ${e(pack.category)}">${pack.cover ? `<img src="${e(pack.cover)}" alt="" loading="lazy">` : `<span class="document-cover">${book}</span>`}<span class="pack-category">${t(pack.category === "decks" ? "КОЛОДА" : pack.category === "mats" ? "ПЛАНШЕТИ" : pack.category === "rules" ? "ПРАВИЛА" : "ПОЛЕ / ЖЕТОНИ")}</span></div><div class="pack-info"><div><h3 data-source-text>${e(pack.title)}</h3><p>${t(pack.subtitle)}</p></div><span aria-hidden="true">›</span></div></a><div class="pack-meta"><span class="pack-count">${count}${breakdown}</span>${rules ? `<a class="pack-rules-link" href="${e(rulesURL)}" ${externalRules ? 'target="_blank" rel="noopener noreferrer"' : ""} aria-label="${e(t("Прочитати правила"))}: ${e(pack.title)}">${t("Прочитати правила")}</a>` : `<span>${pack.files.length} ${t("файлів")}</span>`}</div>${printButton(pack, true)}</article>`;
 }
 export function assetTile(asset, pack, showPack = false) {
   return `<button class="asset-tile" data-asset="${e(asset.id)}" data-in-pack="${e(pack.id)}"><div><img src="${e(asset.image)}" alt="${e(asset.name)}" loading="lazy"></div><h3 data-source-text>${e(showPack ? pack.title : asset.name)}</h3><p>${t(kinds[asset.kind] || "Компонент")}${showPack ? ` · ${e(asset.name)}` : ""}${asset.copies ? ` · ${asset.copies} ${t("коп.")}` : ""}</p></button>`;
@@ -93,7 +97,7 @@ function section(title, items, pack, sheets = false) {
 }
 function packView(pack) {
   const items = assets(pack);
-  return `<main class="content-page"><button class="text-button back-library" id="back-library">← ${t("Уся бібліотека")}</button><div class="page-heading"><div><div class="eyebrow">${t(pack.category === "rules" ? "ПРАВИЛА" : "ФАНАТСЬКЕ ДОПОВНЕННЯ")}</div><h1 data-source-text>${e(pack.title)}</h1><p>${t(pack.subtitle)}</p></div></div>${pack.note ? `<div class="info-note">${t(pack.note)}</div>` : ""}${pack.rulesDocuments.length ? `<section class="pack-rules"><h2 class="section-label">Правила та пам’ятки</h2><div class="rule-grid">${pack.rulesDocuments.map((doc) => ruleTile({ pack, doc })).join("")}</div></section>` : ""}${section(
+  return `<main class="content-page"><button class="text-button back-library" id="back-library">← ${t("Уся бібліотека")}</button><div class="page-heading"><div><div class="eyebrow">${t(pack.category === "rules" ? "ПРАВИЛА" : "ФАНАТСЬКЕ ДОПОВНЕННЯ")}</div><h1 data-source-text>${e(pack.title)}</h1><p>${t(pack.subtitle)}</p></div>${printButton(pack)}</div>${pack.note ? `<div class="info-note">${t(pack.note)}</div>` : ""}${pack.rulesDocuments.length ? `<section class="pack-rules"><h2 class="section-label">Правила та пам’ятки</h2><div class="rule-grid">${pack.rulesDocuments.map((doc) => ruleTile({ pack, doc })).join("")}</div></section>` : ""}${section(
     "Карти",
     items.filter((a) => CARD_KINDS.has(a.kind)),
     pack,

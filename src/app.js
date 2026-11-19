@@ -12,6 +12,10 @@ import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
 import { locale, setLocale, t, localizeUI } from "./i18n.js";
 import { supportURL } from "./library.js";
+import { artworkRect, artworkPlacement, dragArtwork } from "./artwork.js";
+import { FrameColors } from "./frame-colors.js";
+import { libraryPrintPlan } from "./library-print-plan.js";
+import { exportLibraryDeck } from "./library-print.js";
 import { showAsset } from "./asset-viewer.js";
 import {
   libraryView as renderLibrary,
@@ -63,6 +67,61 @@ let state = { cards: [blankCard()], active: 0 },
   drawVersion = 0,
   timer;
 let db;
+let recentColors = [];
+try {
+  const saved = JSON.parse(
+    localStorage.getItem("tyrants-studio-frame-colors") || "[]",
+  );
+  if (Array.isArray(saved)) recentColors = saved;
+} catch {}
+const frameColors = new FrameColors(recentColors);
+function rememberFrameColors() {
+  try {
+    localStorage.setItem(
+      "tyrants-studio-frame-colors",
+      JSON.stringify(frameColors.recent),
+    );
+  } catch {}
+}
+function frameColorControls() {
+  return `<section class="frame-color-settings"><label class="field color-field"><span>Колір рамки</span><input type="color" data-key="purple" value="${card().purple}"><code id="frame-color-value">${card().purple}</code></label><div id="frame-color-history">${frameColorHistory()}</div></section>`;
+}
+function frameColorHistory() {
+  return `<button type="button" class="button small ghost" id="undo-frame-color" ${frameColors.canUndo(card().id) ? "" : "disabled"}>${icon("rotate", 15)} ${t("Скасувати колір")}</button>${frameColors.recent.length ? `<p class="recent-color-label">${t("Останні кольори")}</p><div class="recent-colors" role="group" aria-label="${t("Останні кольори")}">${frameColors.recent.map((color) => `<button type="button" class="recent-color ${color === card().purple.toLowerCase() ? "selected" : ""}" data-frame-color="${color}" style="--swatch:${color}" title="${color}" aria-label="${t("Колір рамки")}: ${color}" aria-pressed="${color === card().purple.toLowerCase()}"></button>`).join("")}</div>` : ""}`;
+}
+function updateFrameColors() {
+  const input = $('[data-key="purple"]');
+  if (input) input.value = card().purple;
+  if ($("#frame-color-value"))
+    $("#frame-color-value").textContent = card().purple;
+  if ($("#frame-color-history"))
+    $("#frame-color-history").innerHTML = frameColorHistory();
+  if ($("#undo-frame-color"))
+    $("#undo-frame-color").onclick = () => {
+      frameColors.finish(card().id, card().purple);
+      const previous = frameColors.undo(card().id);
+      if (previous) {
+        card().purple = previous;
+        changed();
+        persist();
+      }
+      rememberFrameColors();
+      updateFrameColors();
+    };
+  $$("[data-frame-color]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        frameColors.finish(card().id, card().purple);
+        frameColors.begin(card().id, card().purple);
+        card().purple = n.dataset.frameColor;
+        frameColors.finish(card().id, card().purple);
+        rememberFrameColors();
+        changed();
+        persist();
+        updateFrameColors();
+      }),
+  );
+}
 function toast(text, bad = false) {
   const n = $("#toast");
   n.textContent = t(text);
@@ -149,7 +208,7 @@ function layoutSettings() {
   return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект · як Lost Huntman</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний · як Gremlin</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
 }
 function previewInstruction() {
-  return '<div class="preview-foot">Натисніть текст або значок на карті, щоб змінити.</div>';
+  return `<div class="preview-foot">${card().art && side === "front" ? t("Перетягніть ілюстрацію, щоб змінити кадрування. Текст і значки можна натиснути.") : t("Натисніть текст або значок на карті, щоб змінити.")}</div>`;
 }
 function symbolButton(key, target) {
   const s = SYMBOLS[key];
@@ -191,7 +250,7 @@ function panel() {
       )
       .join(
         "",
-      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}${footerSettings()}<label class="field color-field"><span>Фіолетова рамка</span><input type="color" data-key="purple" value="${card().purple}"><code>${card().purple}</code></label>`;
+      )}</div><button class="button ghost" data-upload="icon">${icon("upload")} Власна іконка</button>${card().icon ? '<button class="text-button" data-clear="icon">Повернути стандартний символ</button>' : ""}${footerSettings()}${frameColorControls()}`;
   return `<div class="panel-caption">04 / СОРОЧКА</div><p class="muted">Сорочка збережеться разом із картою. Для двостороннього друку вона експортується на звороті.</p><label class="field"><span>Вигляд сорочки</span><select data-key="backMode"><option value="original" ${card().backMode === "original" ? "selected" : ""}>Оригінальна MINION</option><option value="pattern" ${card().backMode === "pattern" ? "selected" : ""}>Власний візерунок і напис</option><option value="image" ${card().backMode === "image" ? "selected" : ""}>Моє зображення</option></select></label>${card().backMode === "pattern" ? field("Назва колоди", "backTitle", { placeholder: "MINION", max: 40 }) + field("Додатковий рядок", "backSubtitle", { placeholder: "Назва доповнення", max: 50 }) : card().backMode === "image" ? `<button class="upload-box" data-upload="backImage">${icon("image", 32)}<strong>Завантажити сорочку</strong><span>PNG, JPG або WebP</span></button>` : `<p><a class="text-button" href="assets/minion-back-print.png" download="MINION-63.5x88mm.png">Скачати PNG для друку</a></p><p><a class="text-button" href="assets/minion-back-source.png" download="MINION-source-822x1122.png">Оригінальне зображення</a></p>`}`;
 }
 function editor() {
@@ -229,7 +288,7 @@ async function preview() {
       hitAreas.innerHTML = (r.regions || [])
         .map(
           (area) =>
-            `<button type="button" data-card-edit="${area.key}" data-edit-tab="${area.tab || "text"}" class="card-edit-region" style="left:${area.x / 7.5}%;top:${area.y / 10.4}%;width:${area.w / 7.5}%;height:${area.h / 10.4}%" aria-label="Редагувати: ${e(area.label)}" title="${e(area.label)}"></button>`,
+            `<button type="button" data-card-edit="${area.key}" data-edit-tab="${area.tab || "text"}" class="card-edit-region ${area.key === "art" && card().art ? "art-drag-region" : ""}" style="left:${area.x / 7.5}%;top:${area.y / 10.4}%;width:${area.w / 7.5}%;height:${area.h / 10.4}%" aria-label="Редагувати: ${e(area.label)}" title="${e(area.label)}"></button>`,
         )
         .join("");
     localizeUI(hitAreas);
@@ -297,6 +356,14 @@ function render() {
     });
 }
 function bind() {
+  updateFrameColors();
+  $$("[data-print-pack]").forEach(
+    (n) =>
+      (n.onclick = () => {
+        const pack = library.find((p) => p.id === n.dataset.printPack);
+        if (pack) showPrintDialog(pack);
+      }),
+  );
   const copySupport = $("#copy-support-address");
   if (copySupport)
     copySupport.onclick = async () => {
@@ -350,8 +417,92 @@ function bind() {
       }),
   );
   const hitAreas = $("#card-hit-areas");
+  let artDrag = null,
+    suppressArtClick = false;
+  if (hitAreas) {
+    hitAreas.onpointerdown = async (ev) => {
+      if (
+        ev.button !== 0 ||
+        !ev.isPrimary ||
+        side !== "front" ||
+        !card().art ||
+        !ev.target.closest('[data-card-edit="art"]')
+      )
+        return;
+      const start = {
+        pointer: ev.pointerId,
+        x: ev.clientX,
+        y: ev.clientY,
+        artX: card().artX,
+        artY: card().artY,
+        moved: false,
+        id: card().id,
+      };
+      artDrag = start;
+      hitAreas.setPointerCapture(ev.pointerId);
+      try {
+        const image = await getImage(card().art);
+        if (artDrag !== start) return;
+        start.rect = artworkRect(card());
+        start.placement = artworkPlacement(image, start.rect, card());
+        start.scale = 750 / $("#preview").getBoundingClientRect().width;
+      } catch {
+        artDrag = null;
+      }
+    };
+    hitAreas.onpointermove = (ev) => {
+      if (
+        !artDrag?.placement ||
+        ev.pointerId !== artDrag.pointer ||
+        artDrag.id !== card().id
+      )
+        return;
+      const dx = ev.clientX - artDrag.x,
+        dy = ev.clientY - artDrag.y;
+      if (!artDrag.moved && Math.hypot(dx, dy) < 4) return;
+      artDrag.moved = true;
+      ev.preventDefault();
+      hitAreas.classList.add("is-dragging-art");
+      Object.assign(
+        card(),
+        dragArtwork(
+          artDrag,
+          artDrag.placement,
+          artDrag.rect,
+          dx * artDrag.scale,
+          dy * artDrag.scale,
+        ),
+      );
+      for (const key of ["artX", "artY"]) {
+        const slider = $(`[data-key="${key}"]`);
+        if (slider) slider.value = card()[key];
+      }
+      changed();
+    };
+    const finishDrag = (ev, cancel = false) => {
+      if (!artDrag || ev.pointerId !== artDrag.pointer) return;
+      if (cancel && artDrag.moved)
+        Object.assign(card(), { artX: artDrag.artX, artY: artDrag.artY });
+      suppressArtClick = artDrag.moved;
+      if (artDrag.moved) {
+        changed();
+        persist();
+      }
+      artDrag = null;
+      hitAreas.classList.remove("is-dragging-art");
+      if (hitAreas.hasPointerCapture(ev.pointerId))
+        hitAreas.releasePointerCapture(ev.pointerId);
+      setTimeout(() => {
+        suppressArtClick = false;
+      }, 0);
+    };
+    hitAreas.onpointerup = (ev) => finishDrag(ev);
+    hitAreas.onpointercancel = (ev) => finishDrag(ev, true);
+    hitAreas.onlostpointercapture = (ev) => finishDrag(ev);
+  }
   if (hitAreas)
     hitAreas.onclick = (ev) => {
+      if (suppressArtClick) return;
       const n = ev.target.closest("[data-card-edit]");
       if (!n) return;
       tab = n.dataset.editTab;
@@ -409,7 +560,11 @@ function bind() {
         ? "input"
         : "change",
       () => {
+        if (n.dataset.key === "purple")
+          frameColors.begin(card().id, card().purple);
         card()[n.dataset.key] = n.type === "range" ? Number(n.value) : n.value;
+        if (n.dataset.key === "purple" && $("#frame-color-value"))
+          $("#frame-color-value").textContent = card().purple;
         if (n.type === "range") {
           const b = n.closest("label").querySelector("b");
           if (b) b.textContent = n.value + " px";
@@ -420,6 +575,14 @@ function bind() {
       },
     ),
   );
+  const colorInput = $('[data-key="purple"]');
+  if (colorInput)
+    colorInput.addEventListener("change", () => {
+      frameColors.finish(card().id, card().purple);
+      rememberFrameColors();
+      updateFrameColors();
+      persist();
+    });
   $$("[data-tab]").forEach(
     (n) =>
       (n.onclick = () => {
@@ -538,6 +701,75 @@ function bind() {
   $$("[data-asset]").forEach(
     (n) => (n.onclick = () => openAsset(n.dataset.asset, n.dataset.inPack)),
   );
+}
+function showPrintDialog(pack) {
+  const plan = libraryPrintPlan(pack);
+  const controller = new AbortController();
+  const dialog = document.createElement("dialog");
+  dialog.className = "print-dialog";
+  dialog.innerHTML = `<form method="dialog"><button class="icon-button print-close" aria-label="Закрити">${icon("close")}</button></form><div class="eyebrow">ДРУК КОЛОДИ</div><h2 data-source-text>${e(pack.title)}</h2>${plan.sourceSheets ? `<p>Оригінальні аркуші автора з картами та сорочками. Розміри й розташування збережено.</p>` : `<p>A4 · 63,5 × 88 мм · ${t("Проміжок 3 мм і мітки різання")}</p><p id="print-card-count">${plan.cards.length} ${t("карт")}</p><label class="check-field"><input id="library-print-backs" type="checkbox" checked><span>Додати сорочки MINION</span></label>${plan.extra ? `<label class="check-field"><input id="library-print-extras" type="checkbox" checked><span>Додати додаткові карти та пам’ятки</span></label>` : ""}`}${pack.id === "delver" ? `<p class="print-source-warning">У джерелах є розбіжність: 41 ринкова карта замість 40. Експорт зберігає всі надані карти.</p>` : ""}<p class="print-instructions">${plan.sourceSheets ? t("Друкуйте оригінальні аркуші за вказівками автора.") : t("Для двостороннього друку виберіть переворот уздовж довгого краю.")} ${t("Масштаб 100%, без підгонки. Спочатку надрукуйте один аркуш.")}</p><progress id="library-print-progress" value="0" max="1" hidden></progress><p id="library-print-status" role="status" aria-live="polite"></p><button class="button primary wide" id="library-print-download">${icon("download")} ${t(plan.sourceSheets ? "Завантажити друковані файли ZIP" : "Завантажити PDF із сорочками")}</button>`;
+  document.body.append(dialog);
+  localizeUI(dialog);
+  const extras = $("#library-print-extras", dialog),
+    backs = $("#library-print-backs", dialog);
+  const downloadButton = $("#library-print-download", dialog);
+  const syncOptions = () => {
+    const count = libraryPrintPlan(pack, {
+      includeExtras: !extras || extras.checked,
+    }).cards.length;
+    if ($("#print-card-count", dialog))
+      $("#print-card-count", dialog).textContent = `${count} ${t("карт")}`;
+    downloadButton.innerHTML =
+      icon("download") +
+      " " +
+      t(
+        plan.sourceSheets
+          ? "Завантажити друковані файли ZIP"
+          : backs.checked
+            ? "Завантажити PDF із сорочками"
+            : "Завантажити PDF без сорочок",
+      );
+  };
+  if (extras) extras.onchange = syncOptions;
+  if (backs) backs.onchange = syncOptions;
+  dialog.onclose = () => {
+    controller.abort();
+    dialog.remove();
+  };
+  downloadButton.onclick = async () => {
+    downloadButton.disabled = true;
+    if (backs) backs.disabled = true;
+    if (extras) extras.disabled = true;
+    const progress = $("#library-print-progress", dialog),
+      status = $("#library-print-status", dialog);
+    progress.hidden = false;
+    try {
+      const result = await exportLibraryDeck(pack, {
+        duplex: backs?.checked ?? true,
+        includeExtras: extras?.checked ?? true,
+        signal: controller.signal,
+        onProgress: (done, total) => {
+          progress.max = total;
+          progress.value = done;
+          status.textContent = `${t("Підготовка друку")}: ${done} / ${total}`;
+        },
+      });
+      if (controller.signal.aborted) return;
+      download(
+        result.blob,
+        safeName(pack.title) + "-print." + result.extension,
+      );
+      status.textContent = t("Готово. Файл завантажено.");
+    } catch (err) {
+      if (err.name !== "AbortError")
+        status.textContent = t(err.message || "Не вдалося підготувати друк.");
+    } finally {
+      downloadButton.disabled = false;
+      if (backs) backs.disabled = false;
+      if (extras) extras.disabled = false;
+    }
+  };
+  dialog.showModal();
 }
 async function doExport(button) {
   const type = button.dataset.export,

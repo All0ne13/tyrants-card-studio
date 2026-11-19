@@ -1,5 +1,48 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Друкувати колоду", "Print deck"],
+  ["ДРУК КОЛОДИ", "PRINT DECK"],
+  ["Проміжок 3 мм і мітки різання", "3 mm spacing and crop marks"],
+  ["Додати сорочки MINION", "Include MINION backs"],
+  ["Додати додаткові карти та пам’ятки", "Include extra cards and references"],
+  ["Завантажити PDF із сорочками", "Download PDF with backs"],
+  ["Завантажити PDF без сорочок", "Download fronts-only PDF"],
+  ["Завантажити друковані файли ZIP", "Download print files ZIP"],
+  [
+    "Оригінальні аркуші автора з картами та сорочками. Розміри й розташування збережено.",
+    "Original author sheets with cards and backs. Their dimensions and layout are preserved.",
+  ],
+  [
+    "Друкуйте оригінальні аркуші за вказівками автора.",
+    "Print the original sheets following the author's instructions.",
+  ],
+  [
+    "Для двостороннього друку виберіть переворот уздовж довгого краю.",
+    "For double-sided printing, flip on the long edge.",
+  ],
+  [
+    "Масштаб 100%, без підгонки. Спочатку надрукуйте один аркуш.",
+    "Print at 100% / actual size. Test one sheet before printing the deck.",
+  ],
+  [
+    "У джерелах є розбіжність: 41 ринкова карта замість 40. Експорт зберігає всі надані карти.",
+    "The source contains 41 market cards instead of 40. Export preserves all supplied cards.",
+  ],
+  ["Підготовка друку", "Preparing print files"],
+  ["Готово. Файл завантажено.", "Ready. Your file has downloaded."],
+  ["Не вдалося підготувати друк.", "Unable to prepare the print file."],
+  [
+    "Не вдалося завантажити друкований файл.",
+    "Unable to download a print file.",
+  ],
+  ["Друкованих файлів немає.", "No print files are available."],
+  ["Колір рамки", "Frame color"],
+  ["Скасувати колір", "Undo color"],
+  ["Останні кольори", "Recent colors"],
+  [
+    "Перетягніть ілюстрацію, щоб змінити кадрування. Текст і значки можна натиснути.",
+    "Drag the artwork to adjust its crop. Click text or symbols to edit them.",
+  ],
   ["Завантажити пам’ятку PDF", "Download guide PDF"],
   ["Джерело автора", "Author source"],
   [

@@ -126,7 +126,14 @@ test("every deck has a separate, working rules destination in both locales", () 
   for (const language of ["en", "uk"]) {
     setLocale(language);
     const tiles = libraryResults(library, "decks", "");
-    assert.doesNotMatch(tiles, /designs|дизайнів|<button/);
+    assert.doesNotMatch(tiles, /designs|дизайнів/);
+    for (const link of tiles.matchAll(/<a class="pack-main"[\s\S]*?<\/a>/g))
+      assert.doesNotMatch(
+        link[0],
+        /<button/,
+        "Keep the print action outside the deck navigation link",
+      );
+    assert.equal((tiles.match(/data-print-pack=/g) || []).length, 9);
     for (const pack of library.filter((p) => p.category === "decks")) {
       const href = packRulesURL(pack);
       assert.ok(tiles.includes(`href="${href}"`), pack.id);
