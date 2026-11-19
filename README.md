@@ -22,11 +22,13 @@ Drafts stay in the current browser. They are not synchronized across devices or 
 
 ## Community deck submissions
 
-**Propose a deck** is available in the library, My cards and the footer. Authors choose cards they saved in the constructor, give the deck a name, and set copy counts. Card titles can be changed directly in the proposal and are also saved in My cards, including previously untitled cards. A saved card can be included only once; its copy count controls repeated copies. There is no separate card-image upload in this form.
+**Propose a deck** is available in the library, My cards and the footer. Authors enter a deck name, author and short description, choose cards they saved in the constructor, and set copy counts. Card names and images come directly from the saved editor projects: there is no second title field, image-upload control or language selector. **Edit in builder** opens the source card when a change is needed. Selected cards appear once, with their copy count; they are removed from the list of cards still available to add. Author credit appears in the deck description, not on library tiles.
 
 The shared back comes from the first selected card by default, or from another card chosen in My cards. **Edit card back** opens that exact card's Back editor. Text rules and an optional PDF can be added separately. Up to 60 unique cards are supported. Submission refreshes the fronts and selected back from the latest editor state before creating the private server copy. Existing unsent drafts and receipts remain available after upgrading, including any previously saved draft images. Unsubmitted drafts stay in a separate browser database; submitted images and metadata are stored privately in Netlify Blobs.
 
 The owner signs in at `#moderation` to review full-size cards and rules, add feedback, approve/publish, decline or unpublish a deck. Approval connects the same data to the existing library, card viewer, rules reader and A4 printing. Only approved decks appear in the public catalog. Authors can refresh their receipt to see the decision; receipt access stays in the browser where they submitted it. Declined submissions can be permanently deleted by the owner.
+
+Anonymous draft creation allows 30 submissions per IP per day and 100 site-wide, rather than the earlier three/ten limits that could block ordinary retries. File-size and storage budgets remain enforced. Submission errors remain visible beside the submit button and preserve the draft for retry.
 
 This requires the Netlify Function in `netlify/functions/decks.js`, not just static hosting. `npm run build` also prepares a standalone function ZIP in the ignored `.netlify/functions-build` directory for manual deployments. Keep the function in every future Netlify deploy; a static-files-only deploy can remove it. Standard Netlify Git builds use `netlify.toml`.
 

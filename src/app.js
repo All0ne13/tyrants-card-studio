@@ -374,7 +374,6 @@ function bind() {
     render,
     toast,
     onCatalogChange: refreshCommunity,
-    saveProjects: persist,
     editSource: (id, back) => {
       const index = state.cards.findIndex((c) => c.id === id);
       if (index < 0) return;

@@ -1,5 +1,25 @@
 // UI translations only. User-authored card text and original rules are never translated.
 const messages = new Map([
+  ["Редагувати в конструкторі", "Edit in builder"],
+  ["Вибрати з «Мої карти»", "Choose from My cards"],
+  [
+    "Назви та зображення беруться з ваших збережених карт автоматично.",
+    "Names and images come automatically from your saved cards.",
+  ],
+  ["Усі збережені карти вже додано.", "All your saved cards have been added."],
+  [
+    "Додайте назву карти в конструкторі перед надсиланням.",
+    "Add the card title in the builder before submitting.",
+  ],
+  [
+    "Ви досягли денного ліміту заявок. Чернетку збережено — спробуйте завтра.",
+    "You have reached the daily submission limit. Your draft is saved — try again tomorrow.",
+  ],
+  [
+    "Прийом колод сьогодні перевантажено. Чернетку збережено — спробуйте завтра.",
+    "Deck submissions are busy today. Your draft is saved — try again tomorrow.",
+  ],
+
   [
     "Виберіть сорочку однієї зі своїх карт. Вона буде спільною для всієї колоди.",
     "Choose the back of one of your cards. It will be used for the whole deck.",

@@ -318,7 +318,7 @@ test("setup, sessions, submission ownership, file types and cross-origin request
 test("atomic quotas constrain anonymous draft creation and retries do not duplicate uploaded cards", async () => {
   const f = fixture();
   await owner(f);
-  for (let i = 0; i < 3; i++)
+  for (let i = 0; i < LIMITS.submissionsPerIP; i++)
     assert.equal(
       (await f.request("create", { method: "POST", body: metadata(1) })).status,
       201,
@@ -357,6 +357,50 @@ test("atomic quotas constrain anonymous draft creation and retries do not duplic
       .length,
     1,
   );
+});
+
+test("repeated legitimate submissions no longer hit the old three-draft cap, and limits explain the actual failure", async () => {
+  const f = fixture();
+  await owner(f);
+  for (let i = 0; i < 4; i++) {
+    assert.equal(
+      (await f.request("create", { method: "POST", body: metadata(1) })).status,
+      201,
+    );
+  }
+  for (let i = 4; i < LIMITS.submissionsPerIP; i++) {
+    assert.equal(
+      (await f.request("create", { method: "POST", body: metadata(1) })).status,
+      201,
+    );
+  }
+  const limited = await f.request("create", {
+    method: "POST",
+    body: metadata(1),
+  });
+  assert.equal(limited.status, 429);
+  assert.match((await limited.json()).error, /daily submission limit/);
+  assert.equal(
+    (
+      await f.request("create", {
+        method: "POST",
+        body: metadata(1),
+        ip: "different-author",
+      })
+    ).status,
+    201,
+  );
+  const global = [...f.store.entries.keys()].find(
+    (key) => key.startsWith("rate/create/") && key.endsWith("/all"),
+  );
+  await f.store.setJSON(global, { value: LIMITS.submissionsPerDay });
+  const capacity = await f.request("create", {
+    method: "POST",
+    body: metadata(1),
+    ip: "third-author",
+  });
+  assert.equal(capacity.status, 429);
+  assert.match((await capacity.json()).error, /submissions are busy/);
 });
 test("password changes invalidate old sessions and rules PDFs use the same publication gate", async () => {
   const f = fixture(),

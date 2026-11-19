@@ -12,6 +12,8 @@ export const LIMITS = {
   image: 2 * 1024 * 1024,
   pdf: 3 * 1024 * 1024,
   deck: 32 * 1024 * 1024,
+  submissionsPerIP: 30,
+  submissionsPerDay: 100,
 };
 const cookieName = "__Host-underdark-admin";
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -123,7 +125,7 @@ export function deckPack(deck, { review = false } = {}) {
   return {
     id: deck.id,
     title: deck.title,
-    subtitle: deck.description || deck.author,
+    subtitle: deck.description,
     author: deck.author,
     category: "decks",
     community: true,
@@ -169,15 +171,19 @@ export function createDeckService(
     });
   const get = (key) => store.get(key, { type: "json", consistency: "strong" });
   const set = (key, value, options) => store.setJSON(key, value, options);
-  async function reserve(key, amount, maximum) {
+  async function reserve(
+    key,
+    amount,
+    maximum,
+    message = "Upload limit reached. Please try again later.",
+  ) {
     for (let attempt = 0; attempt < 6; attempt++) {
       const item = await store.getWithMetadata(key, {
         type: "json",
         consistency: "strong",
       });
       const value = (item?.data?.value || 0) + amount;
-      if (value > maximum)
-        fail("Upload limit reached. Please try again later.", 429);
+      if (value > maximum) fail(message, 429);
       const result = await set(
         key,
         { value },
@@ -366,8 +372,18 @@ export function createDeckService(
         if (Number(request.headers.get("content-length")) > 100000)
           fail("Submission details are too large.", 413);
         const data = validateSubmission(await request.json());
-        await reserve("rate/create/" + day + "/" + ipHash, 1, 3);
-        await reserve("rate/create/" + day + "/all", 1, 10);
+        await reserve(
+          "rate/create/" + day + "/" + ipHash,
+          1,
+          LIMITS.submissionsPerIP,
+          "You have reached the daily submission limit. Your draft is saved — try again tomorrow.",
+        );
+        await reserve(
+          "rate/create/" + day + "/all",
+          1,
+          LIMITS.submissionsPerDay,
+          "Deck submissions are busy today. Your draft is saved — try again tomorrow.",
+        );
         const token = randomBytes(32).toString("hex"),
           id = randomUUID();
         const deck = {
