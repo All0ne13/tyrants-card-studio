@@ -6,3 +6,7 @@ node_modules/
 .preview/
 *.log
 Thumbs.db
+coverage/
+test-results/
+playwright-report/
+.cache/
