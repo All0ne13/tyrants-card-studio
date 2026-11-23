@@ -12,6 +12,7 @@ import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
 import { locale, setLocale, t, localizeUI } from "./i18n.js";
 import { supportURL } from "./library.js";
+import { expandLanguageVersions, withTranslationDemo } from "./library-languages.js";
 import { artworkRect, artworkPlacement, dragArtwork } from "./artwork.js";
 import { FrameColors } from "./frame-colors.js";
 import { libraryPrintPlan } from "./library-print-plan.js";
@@ -215,6 +216,14 @@ function footerSettings() {
     )}${card().deckIcon ? `<button type="button" data-deck-mark="custom" class="deck-mark-choice ${card().deckMark === "custom" ? "selected" : ""}" aria-label="Власний знак колоди" aria-pressed="${card().deckMark === "custom"}"><img src="${e(card().deckIcon)}" alt=""><span>Мій знак</span></button>` : ""}<button type="button" data-deck-mark="none" class="deck-mark-choice ${card().deckMark === "none" ? "selected" : ""}" aria-label="Без знака колоди" aria-pressed="${card().deckMark === "none"}"><b>—</b><span>Без знака</span></button></div><button type="button" class="text-button upload-deck" data-upload="deckIcon">${icon("upload", 14)} Додати власний знак</button><div class="card-number-fields"><label class="field"><span>Номер карти</span><input type="number" inputmode="numeric" data-key="cardNumber" min="1" max="9999" step="1" value="${e(card().cardNumber)}"></label><b>/</b><label class="field"><span>Карт у колоді</span><input type="number" inputmode="numeric" data-key="deckSize" min="1" max="9999" step="1" value="${e(card().deckSize)}"></label></div><p class="number-feedback">На карті: <strong id="card-number-summary">${e(cardNumberLabel(card()))}</strong></p><p class="number-error" id="card-number-error" ${cardNumberError(card()) ? "" : "hidden"}>${e(cardNumberError(card()))}</p></section>`;
 }
 function layoutSettings() {
+  return secondaryAspectSettings() + standardLayoutSettings();
+}
+function secondaryAspectSettings() {
+  const uk = locale === "uk";
+  const label = (en, ua) => uk ? ua : en;
+  return `<details class="symbol-tools"><summary>${label("Secondary aspect / Arcane School", "Другий аспект / школа магії")}</summary><p class="muted">${label("Optional. Leave the name empty to hide it. The diamond is a temporary symbol; upload the author's icon when available.", "Необов’язково. Залиште назву порожньою, щоб приховати. Ромб — тимчасовий символ; авторський значок можна завантажити.")}</p>${field(label("School name", "Назва школи"), "secondaryAspectText", { placeholder: "Abjuration", max: 35 })}${field(label("School symbol", "Символ школи"), "secondaryAspectSymbol", { placeholder: "◇", max: 4 })}<button type="button" class="button ghost" data-upload="secondaryAspectIcon">${label("Upload school icon", "Завантажити значок школи")}</button>${card().secondaryAspectIcon ? `<button type="button" class="text-button" data-clear="secondaryAspectIcon">${label("Remove school icon", "Прибрати значок школи")}</button>` : ""}</details>`;
+}
+function standardLayoutSettings() {
   return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект · як Lost Huntman</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний · як Gremlin</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
 }
 function previewInstruction() {
@@ -937,7 +946,7 @@ async function upload(key) {
     canvas.height = Math.round(im.height * s);
     canvas.getContext("2d").drawImage(im, 0, 0, canvas.width, canvas.height);
     card()[key] = canvas.toDataURL(
-      ["icon", "deckIcon"].includes(key) ? "image/png" : "image/jpeg",
+      ["icon", "deckIcon", "secondaryAspectIcon"].includes(key) ? "image/png" : "image/jpeg",
       0.94,
     );
     if (key === "art") Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
@@ -1050,6 +1059,7 @@ captureSetupToken();
 await loadCommunityDraft();
 try {
   library = await (await fetch("library.json", { cache: "no-store" })).json();
+  library = expandLanguageVersions(withTranslationDemo(library, new URLSearchParams(location.search).get("demo") === "translations"));
 } catch {
   toast("Бібліотека недоступна. Редактор працює незалежно.", true);
 }

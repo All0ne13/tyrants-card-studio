@@ -185,8 +185,36 @@ export async function renderCard(
     y: 145,
     kind: "race",
     align: "right",
-    maxWidth: 260,
+    maxWidth: card.secondaryAspectText ? 185 : 260,
   });
+  if (card.secondaryAspectText) {
+    const schoolIcon = await getImage(card.secondaryAspectIcon);
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(675, 186, 30, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (schoolIcon) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(675, 186, 26, 0, Math.PI * 2);
+      ctx.clip();
+      const scale = Math.min(48 / schoolIcon.width, 48 / schoolIcon.height);
+      ctx.drawImage(schoolIcon, 675 - schoolIcon.width * scale / 2, 186 - schoolIcon.height * scale / 2, schoolIcon.width * scale, schoolIcon.height * scale);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#fff";
+      ctx.font = "28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(card.secondaryAspectSymbol || "◇", 675, 196);
+    }
+    ctx.fillStyle = "#fff";
+    sourceLettering(ctx, null, card.secondaryAspectText, {
+      x: 635, y: 195, kind: "race", align: "right", maxWidth: 225,
+    });
+  }
   ctx.beginPath();
   ctx.arc(88, 168, 42, 0, Math.PI * 2);
   ctx.fillStyle = "#000";

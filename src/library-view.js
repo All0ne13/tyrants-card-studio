@@ -8,7 +8,7 @@
   packRulesURL,
   ruleDocuments,
 } from "./library.js";
-import { t } from "./i18n.js";
+import { t, locale } from "./i18n.js";
 const e = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -43,12 +43,12 @@ const kinds = {
   update: "Оновлення",
 };
 function printButton(pack, tile = false) {
-  if (pack.category !== "decks") return "";
+  if (pack.category !== "decks" || pack.demo) return "";
   return `<div class="${tile ? "pack-print-action" : "pack-print-header"}"><button type="button" class="button ${tile ? "small ghost" : "primary"}" data-print-pack="${e(pack.id)}" aria-label="${t("Друкувати колоду")}: ${e(pack.title)}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6z"/></svg>${t("Друкувати колоду")}</button></div>`;
 }
 
 export function packList(library, filter, search) {
-  return library.filter((p) => matchesPack(p, filter, search));
+  return library.filter((p) => !p.translationOf && matchesPack(p, filter, search));
 }
 export function packTile(pack) {
   const composition = deckComposition(pack);
@@ -102,7 +102,14 @@ function section(title, items, pack, sheets = false) {
     ? `<section class="library-section"><h2 class="section-label">${t(title)} <span>${items.length}</span></h2><div class="asset-grid ${sheets ? "sheets" : ""}">${items.map((a) => assetTile(a, pack)).join("")}</div></section>`
     : "";
 }
+function languageNavigation(pack) {
+  if (!pack.languageVersions || pack.languageVersions.length < 2) return "";
+  return `<nav class="deck-languages" aria-label="${locale === "uk" ? "Мова колоди" : "Deck language"}"><strong>${locale === "uk" ? "Мова колоди" : "Deck language"}</strong> ${pack.languageVersions.map((v) => `<a class="button small ${v.id === pack.id ? "primary" : "ghost"}" href="#library/${e(v.id)}" ${v.id === pack.id ? 'aria-current="page"' : ""} data-source-text lang="${e(v.language)}">${e(v.label)}</a>`).join(" ")}</nav>`;
+}
 function packView(pack) {
+  return packContent(pack).replace('<div class="page-heading">', languageNavigation(pack) + '<div class="page-heading">');
+}
+function packContent(pack) {
   const items = assets(pack);
   return `<main class="content-page"><button class="text-button back-library" id="back-library">← ${t("Уся бібліотека")}</button><div class="page-heading"><div><div class="eyebrow">${t(pack.category === "rules" ? "ПРАВИЛА" : "ФАНАТСЬКЕ ДОПОВНЕННЯ")}</div><h1 data-source-text>${e(pack.title)}</h1><p ${pack.community ? "data-source-text" : ""}>${pack.community ? e(pack.subtitle) : t(pack.subtitle)}</p>${pack.community ? `<small class="community-author" data-source-text>${e(pack.author)}</small>` : ""}</div>${printButton(pack)}</div>${pack.note ? `<div class="info-note">${t(pack.note)}</div>` : ""}${pack.rulesDocuments.length ? `<section class="pack-rules"><h2 class="section-label">Правила та пам’ятки</h2><div class="rule-grid">${pack.rulesDocuments.map((doc) => ruleTile({ pack, doc })).join("")}</div></section>` : ""}${section(
     "Карти",

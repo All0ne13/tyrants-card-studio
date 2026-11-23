@@ -64,6 +64,12 @@ Tests cover card editing, typography, export dimensions, library data, deck subm
 
 ## Publishing a community deck
 
+### Language versions and secondary aspects
+
+The editor supports an optional secondary aspect: school name, temporary Unicode symbol or uploaded icon. Leave the name empty to keep the standard card layout. The secondary aspect is stored with the project and rendered by the same engine used for print exports. Exact Wizards artwork and positioning can be calibrated when its author supplies the PSD.
+
+Library decks can provide a `translations` array with complete language-specific cards, rules, backs and printable files; see `content/translations.example.json`. Language links open separate versions without changing the interface language. Translations never silently reuse original-language rules or downloads. `?demo=translations#library/mercenaries` enables a labelled Portuguese switching example with no fabricated translated files or print export.
+
 1. Create and save individual cards in **My cards**.
 2. Use **Propose a deck** to choose saved cards, set copy counts, select one saved card as the shared back and add optional rules.
 3. Submit for review. Submissions stay private until an owner approves them.

@@ -18,6 +18,9 @@ export function blankCard() {
     cost: "",
     aspect: "obedience",
     aspectText: "",
+    secondaryAspectText: "",
+    secondaryAspectSymbol: "◇",
+    secondaryAspectIcon: "",
     type: "",
     effect: "",
     flavour: "",
@@ -58,10 +61,12 @@ export function validateCard(input) {
       if (Number.isFinite(v)) card[key] = v;
     } else if (typeof input[key] === "string") card[key] = input[key];
   }
-  for (const key of ["art", "icon", "backImage", "deckIcon"])
+  for (const key of ["art", "icon", "backImage", "deckIcon", "secondaryAspectIcon"])
     if (card[key] && !/^data:image\/(png|jpeg|webp);base64,/.test(card[key]))
       throw Error("Зображення має бути вбудованим PNG, JPEG або WebP.");
   card.artScale = Math.max(1, Math.min(3, card.artScale));
+  card.secondaryAspectText = card.secondaryAspectText.slice(0, 35);
+  card.secondaryAspectSymbol = [...card.secondaryAspectSymbol].slice(0, 2).join("");
   card.artX = Math.max(-100, Math.min(100, card.artX));
   card.artY = Math.max(-100, Math.min(100, card.artY));
   if (

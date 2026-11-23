@@ -1,0 +1,15 @@
+{
+  "description": "Example schema only. Add a translations array to a real deck in library.json after receiving and checking the author's files.",
+  "translations": [
+    {
+      "language": "pt",
+      "label": "Português",
+      "author": "Translation author",
+      "cover": "",
+      "cards": [],
+      "pages": [],
+      "files": [],
+      "rulesDocuments": []
+    }
+  ]
+}
