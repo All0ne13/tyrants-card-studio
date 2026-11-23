@@ -12,6 +12,11 @@ The position and scale are based on the supplied Prodigious Novice Arcanist PSD:
 796 × 1082 px; Arcane School layer bounds (642, 131)–(740, 229), school text bounds
 (472, 175)–(642, 196). The editor maps the trimmed source into its 750 × 1040 canvas.
 Both points fields accept ASCII `*`, including combinations such as `2*`.
+The `*` buttons beside the points fields toggle the star without typing it.
+The secondary-aspect presets are visible immediately, and the original Any Arcana
+icon is the default for a named secondary aspect. A custom upload is optional.
+The text-position slider moves only the school label, preserving its typeface
+and icon position. Its value is saved in the project and used in print exports.
 
 To reproduce the icons from the author's files, install Pillow and psd-tools and run:
 
@@ -30,6 +35,8 @@ The original PSDs are kept outside this public repository.
 
 The post credits Marcos_Otaviano for the Mercenaries and Kuo-toa PT-BR translations.
 BGG metadata confirms the Portuguese Siege file `Cerco_Deck.pdf` (file 286370).
+Mercenaries and Siege show these translation/download pages in their library entries,
+with Marcos's credit for Mercenaries. The links open BGG explicitly.
 These source links do not mean the translated PDFs are bundled: downloads must be
 retrieved and inspected before publishing a translated library version. English
 assets must never be labelled as a translation.

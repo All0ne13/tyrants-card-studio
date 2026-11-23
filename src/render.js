@@ -189,7 +189,7 @@ export async function renderCard(
     maxWidth: card.secondaryAspectText ? 185 : 260,
   });
   if (card.secondaryAspectText) {
-    const school = ARCANE_SCHOOLS[card.secondaryAspectSchool];
+    const school = ARCANE_SCHOOLS[card.secondaryAspectSchool] || ARCANE_SCHOOLS.any;
     const schoolIcon = await getImage(card.secondaryAspectIcon || school?.image);
     // PSD trim: the secondary aspect shares the main aspect's baseline and size.
     const schoolX = 661, schoolY = 168, schoolRadius = 46;
@@ -225,7 +225,7 @@ export async function renderCard(
     ctx.shadowBlur = 3;
     ctx.shadowOffsetY = 1;
     sourceLettering(ctx, null, card.secondaryAspectText, {
-      x: 610, y: 178, kind: "race", align: "right", maxWidth: 225,
+      x: 610, y: 178 + (Number(card.secondaryAspectOffsetY) || 0), kind: "race", align: "right", maxWidth: 225,
     });
     ctx.restore();
   }

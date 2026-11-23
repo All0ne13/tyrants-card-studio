@@ -417,6 +417,18 @@ textarea {
   resize: vertical;
   min-height: 90px;
 }
+.points-input {
+  display: flex;
+  gap: 6px;
+}
+.arcane-school-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.translation-downloads { margin: 24px 0; }
+.translation-source-list { display: flex; flex-wrap: wrap; gap: 16px; }
+.translation-source-list > div { display: grid; gap: 8px; }
+.translation-source-list small { color: #ada0ba; }
+.points-input input { width: 100%; min-width: 0; }
+.points-input button { flex: 0 0 40px; padding: 0; font-size: 25px; }
+.points-input button[aria-pressed="true"] { background: var(--accent, #cbb0e8); color: #1b1229; }
 input[type="range"] {
   padding: 0;
   accent-color: var(--accent);

@@ -202,6 +202,10 @@ function footer() {
   return `<footer class="studio-footer"><div class="app-footer"><span>Конструктор карт <b>Неофіційний фанатський конструктор</b></span><span><a href="#submit">${t("Запропонувати колоду")}</a> · <a href="#moderation">${t("Для власника")}</a> · 63,5 × 88 мм</span></div></footer>`;
 }
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
+  if (["deckVP", "innerVP"].includes(key)) {
+    const caption = locale === "uk" ? "Змінні очки" : "Variable points";
+    return `<div class="field"><label for="points-${key}">${label}</label><div class="points-input"><input id="points-${key}" data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}"><button type="button" class="button ghost" data-variable-points="${key}" aria-label="${caption}: ${label}" title="${caption}" aria-pressed="${card()[key].includes('*')}">*</button></div></div>`;
+  }
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
 }
 function footerSettings() {
@@ -217,16 +221,16 @@ function footerSettings() {
     )}${card().deckIcon ? `<button type="button" data-deck-mark="custom" class="deck-mark-choice ${card().deckMark === "custom" ? "selected" : ""}" aria-label="Власний знак колоди" aria-pressed="${card().deckMark === "custom"}"><img src="${e(card().deckIcon)}" alt=""><span>Мій знак</span></button>` : ""}<button type="button" data-deck-mark="none" class="deck-mark-choice ${card().deckMark === "none" ? "selected" : ""}" aria-label="Без знака колоди" aria-pressed="${card().deckMark === "none"}"><b>—</b><span>Без знака</span></button></div><button type="button" class="text-button upload-deck" data-upload="deckIcon">${icon("upload", 14)} Додати власний знак</button><div class="card-number-fields"><label class="field"><span>Номер карти</span><input type="number" inputmode="numeric" data-key="cardNumber" min="1" max="9999" step="1" value="${e(card().cardNumber)}"></label><b>/</b><label class="field"><span>Карт у колоді</span><input type="number" inputmode="numeric" data-key="deckSize" min="1" max="9999" step="1" value="${e(card().deckSize)}"></label></div><p class="number-feedback">На карті: <strong id="card-number-summary">${e(cardNumberLabel(card()))}</strong></p><p class="number-error" id="card-number-error" ${cardNumberError(card()) ? "" : "hidden"}>${e(cardNumberError(card()))}</p></section>`;
 }
 function layoutSettings() {
-  return secondaryAspectSettings() + standardLayoutSettings() + `<p class="muted">${locale === "uk" ? 'Змінні очки Wizards: у полі очок можна ввести * або 2*. Зірочка друкується разом із картою.' : 'Wizards variable points: enter * or 2* in either points field. The star is included in print exports.'}</p>`;
+  return secondaryAspectSettings() + standardLayoutSettings();
 }
 function secondaryAspectSettings() {
   const uk = locale === "uk";
   const label = (en, ua) => uk ? ua : en;
-  const choices = `<div class="deck-mark-grid">${Object.entries(ARCANE_SCHOOLS).map(([id, school]) => `<button type="button" class="deck-mark-choice ${card().secondaryAspectSchool === id ? 'selected' : ''}" data-arcane-school="${id}" aria-pressed="${card().secondaryAspectSchool === id}"><img src="${school.image}" alt=""><span>${school.label}</span></button>`).join('')}</div><button type="button" class="text-button" data-arcane-school="">${label('No secondary aspect', 'Без другого аспекту')}</button>`;
-  return `<details class="symbol-tools"><summary>${label("Secondary aspect / Arcane School", "Другий аспект / школа магії")}</summary><p class="muted">${label("Choose a school. Its name can be translated below. Leave the name empty to hide the secondary aspect.", "Оберіть школу. Її назву можна перекласти нижче. Порожня назва приховує другий аспект.")}</p>${choices}${field(label("School name", "Назва школи"), "secondaryAspectText", { placeholder: "Abjuration", max: 35 })}<details><summary>${label('Custom school icon', 'Власний значок школи')}</summary>${field(label("School symbol", "Символ школи"), "secondaryAspectSymbol", { placeholder: "◇", max: 4 })}<button type="button" class="button ghost" data-upload="secondaryAspectIcon">${label("Upload school icon", "Завантажити значок школи")}</button>${card().secondaryAspectIcon ? `<button type="button" class="text-button" data-clear="secondaryAspectIcon">${label("Remove school icon", "Прибрати значок школи")}</button>` : ""}</details></details>`;
+  const choices = `<div class="deck-mark-grid arcane-school-grid">${Object.entries(ARCANE_SCHOOLS).map(([id, school]) => `<button type="button" class="deck-mark-choice ${card().secondaryAspectSchool === id ? 'selected' : ''}" data-arcane-school="${id}" aria-pressed="${card().secondaryAspectSchool === id}"><img src="${school.image}" alt=""><span>${school.label}</span></button>`).join('')}</div><button type="button" class="text-button" data-arcane-school="">${label('No secondary aspect', 'Без другого аспекту')}</button>`;
+  return `<details class="symbol-tools" open><summary>${label("Secondary aspect", "Другий аспект")}</summary>${choices}${field(label("Name", "Назва"), "secondaryAspectText", { placeholder: "Abjuration", max: 35 })}<label class="field range"><span>${label('Text position ↕', 'Положення тексту ↕')} <b>${card().secondaryAspectOffsetY} px</b></span><input data-key="secondaryAspectOffsetY" type="range" min="-10" max="12" step="1" value="${card().secondaryAspectOffsetY}"></label><details><summary>${label('Custom icon', 'Власний значок')}</summary><button type="button" class="button ghost" data-upload="secondaryAspectIcon">${label("Upload icon", "Завантажити значок")}</button><button type="button" class="text-button" data-reset-school-icon>${label("Use original icon", "Оригінальний значок")}</button></details></details>`;
 }
 function standardLayoutSettings() {
-  return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект · як Lost Huntman</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний · як Gremlin</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
+  return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
 }
 function previewInstruction() {
   return `<div class="preview-foot">${card().art && side === "front" ? t("Перетягніть ілюстрацію, щоб змінити кадрування. Текст і значки можна натиснути.") : t("Натисніть текст або значок на карті, щоб змінити.")}</div>`;
@@ -501,6 +505,27 @@ function bind() {
       if (field) field.closest('details').open = true;
     };
   });
+  $$("[data-reset-school-icon]").forEach((button) => {
+    button.onclick = async () => {
+      card().secondaryAspectIcon = "";
+      if (!card().secondaryAspectSchool) card().secondaryAspectSchool = "any";
+      if (!card().secondaryAspectText) card().secondaryAspectText = ARCANE_SCHOOLS.any.label;
+      changed();
+      await persist();
+      render();
+    };
+  });
+  $$("[data-variable-points]").forEach((button) => {
+    button.onclick = () => {
+      const key = button.dataset.variablePoints;
+      const input = $(`[data-key="${key}"]`);
+      const value = String(card()[key] || "");
+      card()[key] = value.includes('*') ? value.replaceAll('*', '') : value.slice(0, 2) + '*';
+      input.value = card()[key];
+      button.setAttribute('aria-pressed', String(card()[key].includes('*')));
+      changed();
+    };
+  });
   const hitAreas = $("#card-hit-areas");
   let artDrag = null,
     suppressArtClick = false;
@@ -653,6 +678,8 @@ function bind() {
         if (n.dataset.key === "purple")
           frameColors.begin(card().id, card().purple);
         card()[n.dataset.key] = n.type === "range" ? Number(n.value) : n.value;
+        if (n.dataset.key === "secondaryAspectText" && n.value && !card().secondaryAspectSchool && !card().secondaryAspectIcon)
+          card().secondaryAspectSchool = "any";
         if (n.dataset.key === "purple" && $("#frame-color-value"))
           $("#frame-color-value").textContent = card().purple;
         if (n.type === "range") {

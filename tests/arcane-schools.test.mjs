@@ -19,4 +19,7 @@ test('school selection, translated name and ASCII star points survive project im
   assert.equal(card.deckVP, '*');
   assert.equal(card.innerVP, '2*');
   assert.equal(validateCard({ ...card, secondaryAspectSchool: '../external' }).secondaryAspectSchool, '');
+  assert.equal(validateCard({ ...card, secondaryAspectOffsetY: -5 }).secondaryAspectOffsetY, -5);
+  assert.equal(validateCard({ ...card, secondaryAspectOffsetY: 100 }).secondaryAspectOffsetY, 12);
+  assert.equal(validateCard({ ...card, secondaryAspectOffsetY: -100 }).secondaryAspectOffsetY, -10);
 });

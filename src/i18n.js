@@ -304,8 +304,8 @@ const messages = new Map([
   ["Карт у колоді", "Cards in deck"],
   ["На карті:", "On the card:"],
   ["Макет карти", "Card layout"],
-  ["Короткий ефект · як Lost Huntman", "Short effect · Lost Huntman layout"],
-  ["Стандартний · як Gremlin", "Standard · Gremlin layout"],
+  ["Короткий ефект", "Short effect"],
+  ["Стандартний", "Standard"],
   ["Великий блок правил", "Large rules area"],
   [
     "Натисніть текст або значок на карті, щоб змінити.",

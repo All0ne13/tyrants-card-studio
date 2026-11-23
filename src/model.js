@@ -21,6 +21,7 @@ export function blankCard() {
     aspectText: "",
     secondaryAspectText: "",
     secondaryAspectSchool: "",
+    secondaryAspectOffsetY: 6,
     secondaryAspectSymbol: "◇",
     secondaryAspectIcon: "",
     type: "",
@@ -68,6 +69,7 @@ export function validateCard(input) {
       throw Error("Зображення має бути вбудованим PNG, JPEG або WebP.");
   card.artScale = Math.max(1, Math.min(3, card.artScale));
   card.secondaryAspectText = card.secondaryAspectText.slice(0, 35);
+  card.secondaryAspectOffsetY = Math.max(-10, Math.min(12, card.secondaryAspectOffsetY));
   if (!ARCANE_SCHOOLS[card.secondaryAspectSchool]) card.secondaryAspectSchool = "";
   card.secondaryAspectSymbol = [...card.secondaryAspectSymbol].slice(0, 2).join("");
   card.artX = Math.max(-100, Math.min(100, card.artX));

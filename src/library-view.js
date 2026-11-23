@@ -9,6 +9,7 @@
   ruleDocuments,
 } from "./library.js";
 import { t, locale } from "./i18n.js";
+import { TRANSLATION_SOURCES } from "./translation-sources.js";
 const e = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -107,7 +108,9 @@ function languageNavigation(pack) {
   return `<nav class="deck-languages" aria-label="${locale === "uk" ? "Мова колоди" : "Deck language"}"><strong>${locale === "uk" ? "Мова колоди" : "Deck language"}</strong> ${pack.languageVersions.map((v) => `<a class="button small ${v.id === pack.id ? "primary" : "ghost"}" href="#library/${e(v.id)}" ${v.id === pack.id ? 'aria-current="page"' : ""} data-source-text lang="${e(v.language)}">${e(v.label)}</a>`).join(" ")}</nav>`;
 }
 function packView(pack) {
-  return packContent(pack).replace('<div class="page-heading">', languageNavigation(pack) + '<div class="page-heading">');
+  const sources = TRANSLATION_SOURCES[pack.translationOf || pack.id] || [];
+  const downloads = sources.length ? `<section class="translation-downloads"><h2 class="section-label">${locale === 'uk' ? 'Переклади на BGG' : 'Translations on BGG'}</h2><div class="translation-source-list">${sources.map(source => `<div><a class="button small ghost" href="${e(source.url)}" target="_blank" rel="noopener noreferrer" lang="${e(source.language)}" data-source-text>${e(source.label)} ↗</a>${source.credit ? `<small data-source-text>${locale === 'uk' ? 'Переклад' : 'Translation'}: ${e(source.credit)}</small>` : ''}</div>`).join('')}</div></section>` : '';
+  return packContent(pack).replace('<div class="page-heading">', languageNavigation(pack) + '<div class="page-heading">').replace('<section class="pack-rules">', downloads + '<section class="pack-rules">');
 }
 function packContent(pack) {
   const items = assets(pack);
