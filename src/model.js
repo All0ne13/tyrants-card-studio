@@ -1,4 +1,5 @@
 import { DECK_MARKS } from "./deck-marks.js";
+import { ARCANE_SCHOOLS } from "./arcane-schools.js";
 import { RULE_TYPE } from "./card-typography.js";
 export const CARD_MM = { width: 63.5, height: 88 };
 export const W = 750,
@@ -19,6 +20,7 @@ export function blankCard() {
     aspect: "obedience",
     aspectText: "",
     secondaryAspectText: "",
+    secondaryAspectSchool: "",
     secondaryAspectSymbol: "◇",
     secondaryAspectIcon: "",
     type: "",
@@ -66,6 +68,7 @@ export function validateCard(input) {
       throw Error("Зображення має бути вбудованим PNG, JPEG або WebP.");
   card.artScale = Math.max(1, Math.min(3, card.artScale));
   card.secondaryAspectText = card.secondaryAspectText.slice(0, 35);
+  if (!ARCANE_SCHOOLS[card.secondaryAspectSchool]) card.secondaryAspectSchool = "";
   card.secondaryAspectSymbol = [...card.secondaryAspectSymbol].slice(0, 2).join("");
   card.artX = Math.max(-100, Math.min(100, card.artX));
   card.artY = Math.max(-100, Math.min(100, card.artY));

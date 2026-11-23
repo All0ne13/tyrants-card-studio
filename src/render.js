@@ -1,6 +1,7 @@
 import { t } from "./i18n.js";
 import { W, H, cardNumberLabel } from "./model.js";
 import { DECK_MARKS } from "./deck-marks.js";
+import { ARCANE_SCHOOLS } from "./arcane-schools.js";
 import { SYMBOLS } from "./symbols.js";
 import { drawRichText } from "./rich-text.js";
 import { sourceLettering } from "./source-lettering.js";
@@ -181,17 +182,24 @@ export async function renderCard(
     maxWidth: 360,
   });
   sourceLettering(ctx, null, card.type || (preview ? t("ТИП") : ""), {
-    x: 704,
+    x: card.secondaryAspectText ? 610 : 704,
     y: 145,
     kind: "race",
     align: "right",
     maxWidth: card.secondaryAspectText ? 185 : 260,
   });
   if (card.secondaryAspectText) {
-    const schoolIcon = await getImage(card.secondaryAspectIcon);
+    const school = ARCANE_SCHOOLS[card.secondaryAspectSchool];
+    const schoolIcon = await getImage(card.secondaryAspectIcon || school?.image);
+    // PSD trim: the secondary aspect shares the main aspect's baseline and size.
+    const schoolX = 661, schoolY = 168, schoolRadius = 46;
+    if (school && !card.secondaryAspectIcon) {
+      ctx.drawImage(schoolIcon, schoolX - schoolRadius, schoolY - schoolRadius,
+        schoolRadius * 2, schoolRadius * 2);
+    } else {
     ctx.fillStyle = "#000";
     ctx.beginPath();
-    ctx.arc(675, 186, 30, 0, Math.PI * 2);
+    ctx.arc(schoolX, schoolY, 42, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
@@ -199,21 +207,27 @@ export async function renderCard(
     if (schoolIcon) {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(675, 186, 26, 0, Math.PI * 2);
+      ctx.arc(schoolX, schoolY, 38, 0, Math.PI * 2);
       ctx.clip();
-      const scale = Math.min(48 / schoolIcon.width, 48 / schoolIcon.height);
-      ctx.drawImage(schoolIcon, 675 - schoolIcon.width * scale / 2, 186 - schoolIcon.height * scale / 2, schoolIcon.width * scale, schoolIcon.height * scale);
+      const scale = Math.min(68 / schoolIcon.width, 68 / schoolIcon.height);
+      ctx.drawImage(schoolIcon, schoolX - schoolIcon.width * scale / 2, schoolY - schoolIcon.height * scale / 2, schoolIcon.width * scale, schoolIcon.height * scale);
       ctx.restore();
     } else {
       ctx.fillStyle = "#fff";
       ctx.font = "28px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(card.secondaryAspectSymbol || "◇", 675, 196);
+      ctx.fillText(card.secondaryAspectSymbol || "◇", schoolX, schoolY + 10);
+    }
     }
     ctx.fillStyle = "#fff";
+    ctx.save();
+    ctx.shadowColor = "#000";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetY = 1;
     sourceLettering(ctx, null, card.secondaryAspectText, {
-      x: 635, y: 195, kind: "race", align: "right", maxWidth: 225,
+      x: 610, y: 178, kind: "race", align: "right", maxWidth: 225,
     });
+    ctx.restore();
   }
   ctx.beginPath();
   ctx.arc(88, 168, 42, 0, Math.PI * 2);
