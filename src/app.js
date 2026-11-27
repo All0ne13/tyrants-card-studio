@@ -13,7 +13,10 @@ import { download, exportPDF, exportPNG, exportBundle } from "./export.js";
 import { SYMBOLS, symbolToken } from "./symbols.js";
 import { locale, setLocale, t, localizeUI } from "./i18n.js";
 import { supportURL } from "./library.js";
-import { expandLanguageVersions, withTranslationDemo } from "./library-languages.js";
+import {
+  expandLanguageVersions,
+  withTranslationDemo,
+} from "./library-languages.js";
 import { artworkRect, artworkPlacement, dragArtwork } from "./artwork.js";
 import { FrameColors } from "./frame-colors.js";
 import { libraryPrintPlan } from "./library-print-plan.js";
@@ -204,7 +207,7 @@ function footer() {
 function field(label, key, { area = false, placeholder = "", max = 250 } = {}) {
   if (["deckVP", "innerVP"].includes(key)) {
     const caption = locale === "uk" ? "Змінні очки" : "Variable points";
-    return `<div class="field"><label for="points-${key}">${label}</label><div class="points-input"><input id="points-${key}" data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}"><button type="button" class="button ghost" data-variable-points="${key}" aria-label="${caption}: ${label}" title="${caption}" aria-pressed="${card()[key].includes('*')}">*</button></div></div>`;
+    return `<div class="field"><label for="points-${key}">${label}</label><div class="points-input"><input id="points-${key}" data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}"><button type="button" class="button ghost" data-variable-points="${key}" aria-label="${caption}: ${label}" title="${caption}" aria-pressed="${card()[key].includes("*")}">*</button></div></div>`;
   }
   return `<label class="field"><span>${label}</span>${area ? `<textarea data-key="${key}" rows="${key === "effect" ? 4 : 3}" maxlength="${max}" placeholder="${placeholder}">${e(card()[key])}</textarea>` : `<input data-key="${key}" maxlength="${max}" value="${e(card()[key])}" placeholder="${placeholder}">`}</label>`;
 }
@@ -225,9 +228,18 @@ function layoutSettings() {
 }
 function secondaryAspectSettings() {
   const uk = locale === "uk";
-  const label = (en, ua) => uk ? ua : en;
-  const choices = `<div class="deck-mark-grid arcane-school-grid">${Object.entries(ARCANE_SCHOOLS).map(([id, school]) => `<button type="button" class="deck-mark-choice ${card().secondaryAspectSchool === id ? 'selected' : ''}" data-arcane-school="${id}" aria-pressed="${card().secondaryAspectSchool === id}"><img src="${school.image}" alt=""><span>${school.label}</span></button>`).join('')}</div><button type="button" class="text-button" data-arcane-school="">${label('No secondary aspect', 'Без другого аспекту')}</button>`;
-  return `<details class="symbol-tools" open><summary>${label("Secondary aspect", "Другий аспект")}</summary>${choices}${field(label("Name", "Назва"), "secondaryAspectText", { placeholder: "Abjuration", max: 35 })}<label class="field range"><span>${label('Text position ↕', 'Положення тексту ↕')} <b>${card().secondaryAspectOffsetY} px</b></span><input data-key="secondaryAspectOffsetY" type="range" min="-10" max="12" step="1" value="${card().secondaryAspectOffsetY}"></label><details><summary>${label('Custom icon', 'Власний значок')}</summary><button type="button" class="button ghost" data-upload="secondaryAspectIcon">${label("Upload icon", "Завантажити значок")}</button><button type="button" class="text-button" data-reset-school-icon>${label("Use original icon", "Оригінальний значок")}</button></details></details>`;
+  const label = (en, ua) => (uk ? ua : en);
+  const choices = `<div class="deck-mark-grid arcane-school-grid">${Object.entries(
+    ARCANE_SCHOOLS,
+  )
+    .map(
+      ([id, school]) =>
+        `<button type="button" class="deck-mark-choice ${card().secondaryAspectSchool === id ? "selected" : ""}" data-arcane-school="${id}" aria-pressed="${card().secondaryAspectSchool === id}"><img src="${school.image}" alt=""><span>${school.label}</span></button>`,
+    )
+    .join(
+      "",
+    )}</div><button type="button" class="text-button" data-arcane-school="">${label("No secondary aspect", "Без другого аспекту")}</button>`;
+  return `<details class="symbol-tools" open><summary>${label("Secondary aspect", "Другий аспект")}</summary>${choices}${field(label("Name", "Назва"), "secondaryAspectText", { placeholder: "Abjuration", max: 35 })}<label class="field range"><span>${label("Text position ↕", "Положення тексту ↕")} <b>${card().secondaryAspectOffsetY} px</b></span><input data-key="secondaryAspectOffsetY" type="range" min="-10" max="12" step="1" value="${card().secondaryAspectOffsetY}"></label><details><summary>${label("Custom icon", "Власний значок")}</summary><button type="button" class="button ghost" data-upload="secondaryAspectIcon">${label("Upload icon", "Завантажити значок")}</button><button type="button" class="text-button" data-reset-school-icon>${label("Use original icon", "Оригінальний значок")}</button></details></details>`;
 }
 function standardLayoutSettings() {
   return `<label class="field"><span>Макет карти</span><select data-key="rulesHeight"><option value="170" ${Number(card().rulesHeight) === 170 ? "selected" : ""}>Короткий ефект</option><option value="260" ${Number(card().rulesHeight) === 260 ? "selected" : ""}>Стандартний</option><option value="340" ${Number(card().rulesHeight) === 340 ? "selected" : ""}>Великий блок правил</option></select></label>`;
@@ -502,14 +514,15 @@ function bind() {
       await persist();
       render();
       const field = $('[data-key="secondaryAspectText"]');
-      if (field) field.closest('details').open = true;
+      if (field) field.closest("details").open = true;
     };
   });
   $$("[data-reset-school-icon]").forEach((button) => {
     button.onclick = async () => {
       card().secondaryAspectIcon = "";
       if (!card().secondaryAspectSchool) card().secondaryAspectSchool = "any";
-      if (!card().secondaryAspectText) card().secondaryAspectText = ARCANE_SCHOOLS.any.label;
+      if (!card().secondaryAspectText)
+        card().secondaryAspectText = ARCANE_SCHOOLS.any.label;
       changed();
       await persist();
       render();
@@ -520,9 +533,11 @@ function bind() {
       const key = button.dataset.variablePoints;
       const input = $(`[data-key="${key}"]`);
       const value = String(card()[key] || "");
-      card()[key] = value.includes('*') ? value.replaceAll('*', '') : value.slice(0, 2) + '*';
+      card()[key] = value.includes("*")
+        ? value.replaceAll("*", "")
+        : value.slice(0, 2) + "*";
       input.value = card()[key];
-      button.setAttribute('aria-pressed', String(card()[key].includes('*')));
+      button.setAttribute("aria-pressed", String(card()[key].includes("*")));
       changed();
     };
   });
@@ -678,7 +693,12 @@ function bind() {
         if (n.dataset.key === "purple")
           frameColors.begin(card().id, card().purple);
         card()[n.dataset.key] = n.type === "range" ? Number(n.value) : n.value;
-        if (n.dataset.key === "secondaryAspectText" && n.value && !card().secondaryAspectSchool && !card().secondaryAspectIcon)
+        if (
+          n.dataset.key === "secondaryAspectText" &&
+          n.value &&
+          !card().secondaryAspectSchool &&
+          !card().secondaryAspectIcon
+        )
           card().secondaryAspectSchool = "any";
         if (n.dataset.key === "purple" && $("#frame-color-value"))
           $("#frame-color-value").textContent = card().purple;
@@ -837,30 +857,50 @@ function showPrintDialog(pack) {
   const controller = new AbortController();
   const dialog = document.createElement("dialog");
   dialog.className = "print-dialog";
-  dialog.innerHTML = `<form method="dialog"><button class="icon-button print-close" aria-label="Закрити">${icon("close")}</button></form><div class="eyebrow">ДРУК КОЛОДИ</div><h2 data-source-text>${e(pack.title)}</h2>${plan.sourceSheets ? `<p>Оригінальні аркуші автора з картами та сорочками. Розміри й розташування збережено.</p>` : `<p>A4 · 63,5 × 88 мм · ${t("Проміжок 3 мм і мітки різання")}</p><p id="print-card-count">${plan.cards.length} ${t("карт")}</p><label class="check-field"><input id="library-print-backs" type="checkbox" checked><span>Додати сорочки MINION</span></label>${plan.extra ? `<label class="check-field"><input id="library-print-extras" type="checkbox" checked><span>Додати додаткові карти та пам’ятки</span></label>` : ""}`}${pack.id === "delver" ? `<p class="print-source-warning">У джерелах є розбіжність: 41 ринкова карта замість 40. Експорт зберігає всі надані карти.</p>` : ""}<p class="print-instructions">${plan.sourceSheets ? t("Друкуйте оригінальні аркуші за вказівками автора.") : t("Для двостороннього друку виберіть переворот уздовж довгого краю.")} ${t("Масштаб 100%, без підгонки. Спочатку надрукуйте один аркуш.")}</p><progress id="library-print-progress" value="0" max="1" hidden></progress><p id="library-print-status" role="status" aria-live="polite"></p><button class="button primary wide" id="library-print-download">${icon("download")} ${t(plan.sourceSheets ? "Завантажити друковані файли ZIP" : "Завантажити PDF із сорочками")}</button>`;
-  if (pack.community) {
-    const label = dialog
-      .querySelector("#library-print-backs")
-      ?.closest("label")
-      ?.querySelector("span");
-    if (label) label.textContent = t("Додати сорочки карт");
-  }
+  const singleAvailable = !plan.sourceSheets || !!pack.singleCardFiles;
+  dialog.innerHTML = `<form method="dialog"><button class="icon-button print-close" aria-label="Закрити">${icon("close")}</button></form><div class="eyebrow">ДРУК КОЛОДИ</div><h2 data-source-text>${e(pack.title)}</h2><label class="field"><span>Формат PDF</span><select id="library-print-layout">${singleAvailable ? `<option value="single">Одна сторона карти на сторінку · 63,5 × 88 мм</option>` : ""}<option value="a4">${t(plan.sourceSheets ? "Оригінальні аркуші автора · ZIP" : "Аркуші A4 · до 9 карт")}</option></select></label><p id="print-layout-description"></p><p id="print-card-count"></p><label class="check-field" id="library-print-backs-field"><input id="library-print-backs" type="checkbox" checked><span>Додати сорочки карт</span></label>${plan.extra ? `<label class="check-field"><input id="library-print-extras" type="checkbox" checked><span>Додати додаткові карти та пам’ятки</span></label>` : ""}${pack.id === "delver" ? `<p class="print-source-warning">У джерелах є розбіжність: 41 ринкова карта замість 40. Експорт зберігає всі надані карти.</p>` : ""}${pack.id === "cohort" ? `<p>${t("Містить також альтернативні версії карт з авторського PDF.")}</p>` : ""}<p class="print-instructions" id="library-print-instructions"></p><progress id="library-print-progress" value="0" max="1" hidden></progress><p id="library-print-status" role="status" aria-live="polite"></p><button class="button primary wide" id="library-print-download"></button>`;
   document.body.append(dialog);
   localizeUI(dialog);
   const extras = $("#library-print-extras", dialog),
     backs = $("#library-print-backs", dialog);
+  const layout = $("#library-print-layout", dialog);
   const downloadButton = $("#library-print-download", dialog);
   const syncOptions = () => {
-    const count = libraryPrintPlan(pack, {
-      includeExtras: !extras || extras.checked,
-    }).cards.length;
-    if ($("#print-card-count", dialog))
-      $("#print-card-count", dialog).textContent = `${count} ${t("карт")}`;
+    const single = layout.value === "single";
+    const originals = plan.sourceSheets && !single;
+    const count = plan.sourceSheets
+      ? pack.singleCardCount
+      : libraryPrintPlan(pack, {
+          includeExtras: !extras || extras.checked,
+        }).cards.length;
+    $("#print-card-count", dialog).textContent = originals
+      ? ""
+      : `${count} ${t("карт")} · ${single ? count * (backs.checked ? 2 : 1) : Math.ceil(count / 9) * (backs.checked ? 2 : 1)} ${t("сторінок")}`;
+    $("#library-print-backs-field", dialog).hidden = originals;
+    $("#print-layout-description", dialog).textContent = t(
+      originals
+        ? "Оригінальні аркуші автора з картами та сорочками. Розміри й розташування збережено."
+        : single
+          ? backs.checked
+            ? "Лице 1 → сорочка 1 → лице 2 → сорочка 2. Одна сторона карти на кожній сторінці."
+            : "Одна лицьова сторона карти на кожній сторінці."
+          : "Проміжок 3 мм і мітки різання",
+    );
+    $("#library-print-instructions", dialog).textContent =
+      (originals
+        ? t("Друкуйте оригінальні аркуші за вказівками автора.")
+        : single
+          ? t("PDF для типографії. Розмір кожної сторінки: 63,5 × 88 мм.")
+          : t(
+              "Для двостороннього друку виберіть переворот уздовж довгого краю.",
+            )) +
+      " " +
+      t("Масштаб 100%, без підгонки. Спочатку надрукуйте один аркуш.");
     downloadButton.innerHTML =
       icon("download") +
       " " +
       t(
-        plan.sourceSheets
+        originals
           ? "Завантажити друковані файли ZIP"
           : backs.checked
             ? "Завантажити PDF із сорочками"
@@ -869,6 +909,8 @@ function showPrintDialog(pack) {
   };
   if (extras) extras.onchange = syncOptions;
   if (backs) backs.onchange = syncOptions;
+  layout.onchange = syncOptions;
+  syncOptions();
   dialog.onclose = () => {
     controller.abort();
     dialog.remove();
@@ -877,11 +919,13 @@ function showPrintDialog(pack) {
     downloadButton.disabled = true;
     if (backs) backs.disabled = true;
     if (extras) extras.disabled = true;
+    layout.disabled = true;
     const progress = $("#library-print-progress", dialog),
       status = $("#library-print-status", dialog);
     progress.hidden = false;
     try {
       const result = await exportLibraryDeck(pack, {
+        layout: layout.value,
         duplex: backs?.checked ?? true,
         includeExtras: extras?.checked ?? true,
         signal: controller.signal,
@@ -894,7 +938,10 @@ function showPrintDialog(pack) {
       if (controller.signal.aborted) return;
       download(
         result.blob,
-        safeName(pack.title) + "-print." + result.extension,
+        safeName(pack.title) +
+          (layout.value === "single" ? "-single-cards" : "-print") +
+          "." +
+          result.extension,
       );
       status.textContent = t("Готово. Файл завантажено.");
     } catch (err) {
@@ -904,6 +951,7 @@ function showPrintDialog(pack) {
       downloadButton.disabled = false;
       if (backs) backs.disabled = false;
       if (extras) extras.disabled = false;
+      layout.disabled = false;
     }
   };
   dialog.showModal();
@@ -988,7 +1036,9 @@ async function upload(key) {
     canvas.height = Math.round(im.height * s);
     canvas.getContext("2d").drawImage(im, 0, 0, canvas.width, canvas.height);
     card()[key] = canvas.toDataURL(
-      ["icon", "deckIcon", "secondaryAspectIcon"].includes(key) ? "image/png" : "image/jpeg",
+      ["icon", "deckIcon", "secondaryAspectIcon"].includes(key)
+        ? "image/png"
+        : "image/jpeg",
       0.94,
     );
     if (key === "art") Object.assign(card(), { artScale: 1, artX: 0, artY: 0 });
@@ -1101,7 +1151,12 @@ captureSetupToken();
 await loadCommunityDraft();
 try {
   library = await (await fetch("library.json", { cache: "no-store" })).json();
-  library = expandLanguageVersions(withTranslationDemo(library, new URLSearchParams(location.search).get("demo") === "translations"));
+  library = expandLanguageVersions(
+    withTranslationDemo(
+      library,
+      new URLSearchParams(location.search).get("demo") === "translations",
+    ),
+  );
 } catch {
   toast("Бібліотека недоступна. Редактор працює незалежно.", true);
 }

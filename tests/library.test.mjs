@@ -61,6 +61,7 @@ test("all packaged covers, reader pages and source files exist", () => {
   for (const pack of library) {
     const urls = [
       pack.cover,
+      ...Object.values(pack.singleCardFiles || {}),
       ...assets(pack).map((a) => a.image),
       ...pack.files.map((f) => f.url),
       ...pack.rulesDocuments.flatMap((d) => [d.sourceUrl, ...(d.pages || [])]),
@@ -108,7 +109,7 @@ test("deck totals include repeated copies and distinguish supporting cards", () 
     jaezred: 48,
     delver: 94,
     cohort: 10,
-    svirfneblin: 18,
+    svirfneblin: 10,
   };
   for (const pack of library.filter((p) => p.category === "decks")) {
     const composition = deckComposition(pack);

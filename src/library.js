@@ -17,8 +17,8 @@ export function deckComposition(pack) {
     // Cohort Rules and Playtest Cards v1.3, p. 1: 10 Cohort Minion cards.
     return { total: 10, market: 0, extra: 10, source: "rules" };
   if (pack.id === "svirfneblin")
-    // Two supplied update fronts, nine cards each; the reverse sheet is excluded.
-    return { total: 18, market: 0, extra: 18, source: "update-sheets" };
+    // The first update sheet has nine cards; the second has one, not nine.
+    return { total: 10, market: 0, extra: 10, source: "update-sheets" };
   if (pack.id === "delver")
     // Component Overview: 40 market + 30 treasure + 24 stalker cards.
     // The supplied market artwork sums to 41 copies; keep that discrepancy

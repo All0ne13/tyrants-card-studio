@@ -555,6 +555,33 @@ const messages = new Map([
   ["Оновлення", "Update"],
   ["Компонент", "Component"],
   ["Друковані файли", "Print files"],
+  ["Формат PDF", "PDF layout"],
+  [
+    "Одна сторона карти на сторінку · 63,5 × 88 мм",
+    "One card side per page · 63.5 × 88 mm",
+  ],
+  ["Аркуші A4 · до 9 карт", "A4 sheets · up to 9 cards"],
+  ["Оригінальні аркуші автора · ZIP", "Original author print sheets · ZIP"],
+  [
+    "Лице 1 → сорочка 1 → лице 2 → сорочка 2. Одна сторона карти на кожній сторінці.",
+    "Front 1 → back 1 → front 2 → back 2. One card side on each page.",
+  ],
+  [
+    "Одна лицьова сторона карти на кожній сторінці.",
+    "One card front on each page.",
+  ],
+  [
+    "PDF для типографії. Розмір кожної сторінки: 63,5 × 88 мм.",
+    "Print-shop PDF. Every page measures 63.5 × 88 mm.",
+  ],
+  [
+    "Містить також альтернативні версії карт з авторського PDF.",
+    "Also includes the alternative card versions from the author's PDF.",
+  ],
+  [
+    "Окремі карти для цього набору ще не підготовлено.",
+    "Individual cards are not available for this set yet.",
+  ],
   ["Карти", "Cards"],
   ["Аркуші для друку", "Print sheets"],
   ["Читати правила", "Read rules"],

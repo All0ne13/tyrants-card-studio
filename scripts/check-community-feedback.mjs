@@ -62,6 +62,7 @@ function pageContents(bytes) {
 async function exportPack(id, options = {}) {
   await page.goto(base + "#library/" + id);
   await page.locator(`[data-print-pack="${id}"]`).click();
+  await page.locator("#library-print-layout").selectOption("a4");
   if (options.extras === false)
     await page.locator("#library-print-extras").uncheck();
   if (options.backs === false)

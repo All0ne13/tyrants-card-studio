@@ -78,10 +78,14 @@ test("print plans include physical copies, supporting cards and original sheet-o
     40,
   );
   for (const id of ["cohort", "svirfneblin"]) {
-    const plan = libraryPrintPlan(library.find((p) => p.id === id));
+    const pack = library.find((p) => p.id === id);
+    const plan = libraryPrintPlan(pack);
     assert.equal(plan.sourceSheets, true);
     assert.ok(plan.files.every((f) => f.role === "print"));
     assert.ok(plan.files.length);
+    assert.equal(pack.singleCardCount, id === "cohort" ? 20 : 10);
+    assert.ok(pack.singleCardFiles.duplex.endsWith("-duplex.pdf"));
+    assert.ok(pack.singleCardFiles.fronts.endsWith("-fronts.pdf"));
   }
   // Never silently discard the conflicting extra Delver market card.
   assert.equal(
